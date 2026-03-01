@@ -3,7 +3,11 @@ import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
-import 'screens/home_screen.dart';
+import 'screens/passenger/passenger_home_screen.dart';
+import 'screens/driver/driver_home_screen.dart';
+import 'screens/conductor/conductor_home_screen.dart';
+import 'screens/bus_owner/bus_owner_home_screen.dart';
+import 'screens/authority/authority_home_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -12,8 +16,8 @@ void main() {
 /**
  * Main Application
  * 
- * DEPENDENCY INJECTION:
- * Provides AuthProvider to entire widget tree
+ * POLYMORPHISM (OOP Concept):
+ * Different home screens for different user roles
  */
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
@@ -34,14 +38,83 @@ class MyApp extends StatelessWidget {
           useMaterial3: true,
         ),
         initialRoute: '/',
-        routes: {
-          '/': (context) => const SplashScreen(),
-          '/login': (context) => const LoginScreen(),
-          '/register': (context) => const RegisterScreen(),
-          '/home': (context) => const HomeScreen(),
+        onGenerateRoute: (settings) {
+          // Handle all routes
+          switch (settings.name) {
+            case '/':
+              return MaterialPageRoute(builder: (_) => const SplashScreen());
+            case '/login':
+              return MaterialPageRoute(builder: (_) => const LoginScreen());
+            case '/register':
+              return MaterialPageRoute(builder: (_) => const RegisterScreen());
+            case '/home':
+              return MaterialPageRoute(builder: (_) => const RoleBasedHome());
+            default:
+              // Handle feature routes (to be implemented)
+              return MaterialPageRoute(
+                builder: (_) => Scaffold(
+                  appBar: AppBar(title: const Text('Coming Soon')),
+                  body: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.construction,
+                          size: 64,
+                          color: Colors.orange,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Feature Under Development',
+                          style: Theme.of(context).textTheme.headlineSmall,
+                        ),
+                        const SizedBox(height: 8),
+                        Text('Route: ${settings.name}'),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+          }
         },
       ),
     );
+  }
+}
+
+/**
+ * Role-Based Home Screen Router
+ * 
+ * POLYMORPHISM:
+ * Returns different home screen based on user role
+ */
+class RoleBasedHome extends StatelessWidget {
+  const RoleBasedHome({Key? key}) : super(key: key);
+  
+  @override
+  Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+    final user = authProvider.currentUser;
+    
+    if (user == null) {
+      return const LoginScreen();
+    }
+    
+    // Return appropriate home screen based on role
+    switch (user.role.toUpperCase()) {
+      case 'PASSENGER':
+        return const PassengerHomeScreen();
+      case 'DRIVER':
+        return const DriverHomeScreen();
+      case 'CONDUCTOR':
+        return const ConductorHomeScreen();
+      case 'BUS_OWNER':
+        return const BusOwnerHomeScreen();
+      case 'AUTHORITY':
+        return const AuthorityHomeScreen();
+      default:
+        return const PassengerHomeScreen();
+    }
   }
 }
 
@@ -64,8 +137,7 @@ class _SplashScreenState extends State<SplashScreen> {
   }
   
   Future<void> _checkAuth() async {
-    // Wait for auth provider to initialize
-    await Future.delayed(const Duration(milliseconds: 500));
+    await Future.delayed(const Duration(seconds: 1));
     
     if (!mounted) return;
     
@@ -80,9 +152,36 @@ class _SplashScreenState extends State<SplashScreen> {
   
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
       body: Center(
-        child: CircularProgressIndicator(),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.directions_bus,
+              size: 100,
+              color: Colors.blue,
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'Ride Pulse',
+              style: TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Smart Digital Ticketing System',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey,
+              ),
+            ),
+            const SizedBox(height: 48),
+            const CircularProgressIndicator(),
+          ],
+        ),
       ),
     );
   }
