@@ -1,39 +1,42 @@
 package com.ridepulse.backend.model;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import java.time.LocalDate;
 
 /**
- * Driver Entity - Demonstrates INHERITANCE
+ * Staff Entity
+ *
+ * INHERITANCE (OOP Concept):
+ * Staff extends User
  */
 @Entity
 @Table(name = "staff")
 @Data
 @NoArgsConstructor
-public class Staff {
+@AllArgsConstructor
+@EqualsAndHashCode(callSuper = true)
+@DiscriminatorValue("STAFF")
+public class Staff extends User {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "staff_id")
-    private Integer staffId;
-
-    @OneToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @Column(name = "employee_id", unique = true, nullable = false)
+    private String employeeId;
 
     @Column(name = "staff_type", nullable = false)
-    private String staffType; // driver or conductor
+    @Enumerated(EnumType.STRING)
+    private StaffType staffType;
 
-    @Column(name = "employee_id", nullable = false)
-    private String employeeId;
+    @Column(name = "date_of_joining")
+    private LocalDate dateOfJoining;
 
     @Column(name = "license_number")
     private String licenseNumber;
 
     @Column(name = "license_expiry")
-    private java.time.LocalDate licenseExpiry;
+    private LocalDate licenseExpiry;
 
     @Column(name = "is_active")
     private Boolean isActive = true;

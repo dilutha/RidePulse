@@ -9,6 +9,9 @@ import java.time.LocalDateTime;
 
 /**
  * Complaint Entity
+ *
+ * ENCAPSULATION (OOP Concept):
+ * Encapsulates complaint management logic
  */
 @Entity
 @Table(name = "complaints")
@@ -23,48 +26,73 @@ public class Complaint extends BaseEntity {
     @Column(name = "complaint_id")
     private Integer complaintId;
 
-    @Column(name = "ticket_number", unique = true)
-    private String ticketNumber;
+    @Column(name = "complaint_number", unique = true, nullable = false)
+    private String complaintNumber;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "passenger_id")
-    private Staff passenger;
+    private User passenger;
 
-    @Column(nullable = false)
-    private String description;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "bus_id")
+    private Bus bus;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "staff_id")
+    private Staff staff;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "complaint_category")
     private ComplaintCategory category;
+
+    @Column(nullable = false, columnDefinition = "TEXT")
+    private String description;
+
+    private String photoUrl;
+
+    @Enumerated(EnumType.STRING)
+    private ComplaintPriority priority = ComplaintPriority.MEDIUM;
 
     @Enumerated(EnumType.STRING)
     private ComplaintStatus status = ComplaintStatus.SUBMITTED;
 
-    @Column(name = "submitted_at")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assigned_to")
+    private User assignedTo;
+
+    private String resolutionNotes;
+
     private LocalDateTime submittedAt;
 
-    /**
-     * Business method - Change complaint status
-     */
-    public void changeStatus(ComplaintStatus newStatus) {
-        this.status = newStatus;
-        // Additional status change logic
+    private LocalDateTime resolvedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        super.onCreate();
+        this.submittedAt = LocalDateTime.now();
+
+        if (this.complaintNumber == null) {
+            this.complaintNumber = "CMP-" + System.currentTimeMillis();
+        }
     }
-}
 
-enum ComplaintCategory {
-    CROWDING,
-    DRIVER_BEHAVIOR,
-    DELAY,
-    CLEANLINESS,
-    SAFETY,
-    OTHER
-}
+    public void assignTo(User authority) {
+        this.assignedTo = authority;
+        this.status = ComplaintStatus.UNDER_REVIEW;
+    }
 
-enum ComplaintStatus {
-    SUBMITTED,
-    UNDER_REVIEW,
-    RESOLVED,
-    CLOSED,
-    REJECTED
+    public void resolve(String resolutionNotes) {
+        this.resolutionNotes = resolutionNotes;
+        this.status = ComplaintStatus.RESOLVED;
+        this.resolvedAt = LocalDateTime.now();
+    }
+
+    public void close() {
+        this.status = ComplaintStatus.CLOSED;
+    }
+
+    public void reject(String reason) {
+        this.resolutionNotes = reason;
+        this.status = ComplaintStatus.REJECTED;
+        this.resolvedAt = LocalDateTime.now();
+    }
 }
