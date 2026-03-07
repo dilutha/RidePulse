@@ -5,6 +5,8 @@ package com.ridepulse.backend.model; import jakarta.persistence.*; import lombok
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name = "dtype")
 public class User extends BaseEntity {
 
     @Id
