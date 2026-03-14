@@ -9,38 +9,37 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 /**
- * SINGLETON PATTERN (via Spring @Service):
- * Spring manages this as a singleton bean
+ * CustomUserDetailsService
  *
- * ENCAPSULATION:
- * Encapsulates user loading logic for Spring Security
+ * Responsible for loading user data from the database
+ * and converting it into Spring Security's UserDetails object.
+ *
+ * This class is used by Spring Security during authentication.
  */
 @Service
 @RequiredArgsConstructor
 public class CustomUserDetailsService implements UserDetailsService {
 
-    /**
-     * DEPENDENCY INJECTION:
-     * Repository is injected via constructor (RequiredArgsConstructor)
-     */
     private final UserRepository userRepository;
 
     /**
-     * Load user by username (email in our case)
-     * Required by Spring Security for authentication
+     * Loads user from database by email (used as username).
      *
-     * @param email User's email
-     * @return UserDetails object
-     * @throws UsernameNotFoundException if user not found
+     * @param email user's login email
+     * @return UserDetails object used by Spring Security
+     * @throws UsernameNotFoundException if user does not exist
      */
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() ->
-                        new UsernameNotFoundException("User not found with email: " + email)
+                        new UsernameNotFoundException(
+                                "User not found with email: " + email
+                        )
                 );
 
-        // Return our custom UserDetails implementation
+        // Convert database User entity → Spring Security UserDetails
         return new CustomUserDetails(user);
     }
 }

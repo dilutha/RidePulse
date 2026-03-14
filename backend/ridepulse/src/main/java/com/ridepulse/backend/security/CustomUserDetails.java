@@ -1,64 +1,79 @@
 package com.ridepulse.backend.security;
 
 import com.ridepulse.backend.model.User;
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+
 import java.util.Collection;
 import java.util.Collections;
 
 /**
- * ADAPTER PATTERN (Design Pattern):
- * Adapts our User entity to Spring Security's UserDetails interface
+ * CustomUserDetails
  *
- * ENCAPSULATION:
- * Wraps User entity and provides security-specific methods
+ * Adapter that converts the application's User entity
+ * into Spring Security's UserDetails format.
  */
-@Data
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class CustomUserDetails implements UserDetails {
 
-    private User user;
+    private final User user;
 
     /**
-     * Return user authorities (roles)
-     * Spring Security uses this for authorization
+     * Convert user role into Spring Security authority.
      */
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        // Convert user role to Spring Security authority
+
         return Collections.singletonList(
-                new SimpleGrantedAuthority("ROLE_" + user.getRole().name())
+                new SimpleGrantedAuthority(user.getRole().name())
         );
     }
 
+    /**
+     * Return hashed password stored in database.
+     */
     @Override
     public String getPassword() {
         return user.getPasswordHash();
     }
 
+    /**
+     * Username used by Spring Security (email in this system).
+     */
     @Override
     public String getUsername() {
         return user.getEmail();
     }
 
+    /**
+     * Account expiration status.
+     */
     @Override
     public boolean isAccountNonExpired() {
         return true;
     }
 
+    /**
+     * Account lock status.
+     */
     @Override
     public boolean isAccountNonLocked() {
         return true;
     }
 
+    /**
+     * Credential expiration status.
+     */
     @Override
     public boolean isCredentialsNonExpired() {
         return true;
     }
 
+    /**
+     * Whether the account is active.
+     */
     @Override
     public boolean isEnabled() {
         return user.getIsActive();

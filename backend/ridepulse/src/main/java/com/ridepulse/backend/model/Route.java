@@ -3,28 +3,28 @@ package com.ridepulse.backend.model;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
-import java.util.ArrayList;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * Route Entity - Demonstrates COMPOSITION (HAS-A relationship)
- * Route HAS-A collection of RouteStops
+ * Route Entity
+ *
+ * ENCAPSULATION (OOP Concept):
+ * Encapsulates route information
  */
 @Entity
 @Table(name = "routes")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper = true)
-public class Route extends BaseEntity {
+public class Route {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "route_id")
-    private Integer routeId;
+    private Long routeId;
 
     @Column(name = "route_number", unique = true, nullable = false)
     private String routeNumber;
@@ -38,43 +38,49 @@ public class Route extends BaseEntity {
     @Column(name = "end_location", nullable = false)
     private String endLocation;
 
-    @Column(name = "total_distance_km")
+    @Column(name = "total_distance_km", precision = 6, scale = 2)
     private BigDecimal totalDistanceKm;
 
     @Column(name = "estimated_duration_minutes")
     private Integer estimatedDurationMinutes;
 
-    @Column(name = "base_fare", nullable = false)
+    @Column(name = "base_fare", precision = 8, scale = 2, nullable = false)
     private BigDecimal baseFare;
 
     @Column(name = "is_active")
     private Boolean isActive = true;
 
-    /**
-     * COMPOSITION: Route HAS-MANY RouteStops
-     * Cascade operations demonstrate object lifecycle management
-     */
-    @OneToMany(mappedBy = "route", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<RouteStop> stops = new ArrayList<>();
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
 
-    /**
-     * Business method - Encapsulation of route calculation logic
-     */
-    public BigDecimal calculateETA() {
-        // Complex ETA calculation hidden in this method
-        return BigDecimal.valueOf(estimatedDurationMinutes);
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    // One-to-many relationship with RouteStop
+    @OneToMany(mappedBy = "route", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<RouteStop> stops;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 
     /**
-     * Helper method to add stops - maintains bidirectional relationship
+     * ENCAPSULATION - Business Logic Method
+     * Calculate ETA in minutes based on distance and average speed
      */
-    public void addStop(RouteStop stop) {
-        stops.add(stop);
-        stop.setRoute(this);
-    }
+    public Integer calculateETA(Double distanceKm, Double averageSpeedKmh) {
+        if (distanceKm == null || averageSpeedKmh == null || averageSpeedKmh == 0) {
+            return null;
+        }
 
-    public void removeStop(RouteStop stop) {
-        stops.remove(stop);
-        stop.setRoute(null);
+        double timeHours = distanceKm / averageSpeedKmh;
+        return (int) Math.ceil(timeHours * 60); // Convert to minutes
     }
 }

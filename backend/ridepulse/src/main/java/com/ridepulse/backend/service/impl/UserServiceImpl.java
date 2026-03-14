@@ -7,14 +7,15 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 /**
- * ENCAPSULATION:
- * Business logic for user management
- * Now includes BCrypt password hashing
+ * UserService Implementation
+ *
+ * Handles user management business logic.
  */
 @Service
 @RequiredArgsConstructor
@@ -22,24 +23,22 @@ import java.util.UUID;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder; // BCrypt encoder injected
+    private final PasswordEncoder passwordEncoder;
 
     /**
-     * Create user with encrypted password
-     * BCrypt automatically salts and hashes the password
+     * Create user with BCrypt encrypted password.
      */
     @Override
     public User createUser(User user) {
-        // Validation
+
         if (userRepository.existsByEmail(user.getEmail())) {
             throw new RuntimeException("Email already exists");
         }
 
-        // ENCRYPT PASSWORD using BCrypt
+        // Encrypt password before saving
         String encryptedPassword = passwordEncoder.encode(user.getPasswordHash());
         user.setPasswordHash(encryptedPassword);
 
-        // Set default values
         user.setIsActive(true);
 
         return userRepository.save(user);
@@ -47,64 +46,57 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Optional<User> getUserById(UUID userId) {
+
         return userRepository.findById(userId);
     }
 
     @Override
     public Optional<User> getUserByEmail(String email) {
+
         return userRepository.findByEmail(email);
     }
 
     @Override
     public List<User> getAllUsers() {
+
         return userRepository.findAll();
     }
 
+    /**
+     * Update user details.
+     */
     @Override
     public User updateUser(UUID userId, User updatedUser) {
+
         return userRepository.findById(userId)
                 .map(existingUser -> {
+
                     existingUser.setFullName(updatedUser.getFullName());
                     existingUser.setPhone(updatedUser.getPhone());
 
-                    // If password is being updated, encrypt it
+                    // Update password if provided
                     if (updatedUser.getPasswordHash() != null &&
                             !updatedUser.getPasswordHash().isEmpty()) {
-                        String encryptedPassword = passwordEncoder.encode(
-                                updatedUser.getPasswordHash()
-                        );
+
+                        String encryptedPassword =
+                                passwordEncoder.encode(updatedUser.getPasswordHash());
+
                         existingUser.setPasswordHash(encryptedPassword);
                     }
 
                     return userRepository.save(existingUser);
+
                 })
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
 
     @Override
     public void deleteUser(UUID userId) {
-        userRepository.deleteById(userId);
-    }
 
-    /**
-     * Login method now uses BCrypt to verify password
-     */
-    @Override
-    public boolean login(String email, String password) {
-        Optional<User> userOpt = userRepository.findByEmail(email);
-
-        if (userOpt.isPresent()) {
-            User user = userOpt.get();
-            // Use BCrypt to verify password
-            return passwordEncoder.matches(password, user.getPasswordHash());
+        if (!userRepository.existsById(userId)) {
+            throw new RuntimeException("User not found");
         }
 
-        return false;
-    }
-
-    @Override
-    public void logout(UUID userId) {
-        userRepository.findById(userId)
-                .ifPresent(User::logout);
+        userRepository.deleteById(userId);
     }
 }

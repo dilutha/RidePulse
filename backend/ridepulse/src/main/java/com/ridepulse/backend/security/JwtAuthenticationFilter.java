@@ -1,5 +1,6 @@
 package com.ridepulse.backend.security;
 
+import com.ridepulse.backend.config.JwtProperties;
 import com.ridepulse.backend.util.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -12,30 +13,26 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+
 import java.io.IOException;
 
 /**
- * CHAIN OF RESPONSIBILITY PATTERN:
- * This filter is part of Spring Security's filter chain
- * Each filter processes the request and passes it to the next
+ * JWT Authentication Filter
  *
- * ENCAPSULATION:
- * JWT validation logic is encapsulated in this filter
+ * This filter intercepts every request and checks for a valid JWT token.
+ * If a valid token is found, it authenticates the user and sets the
+ * authentication in Spring Security's SecurityContext.
  */
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
+    private final JwtProperties jwtProperties;
     private final CustomUserDetailsService userDetailsService;
 
     /**
-     * Filter method executed for each HTTP request
-     * Validates JWT token and sets authentication in SecurityContext
-     *
-     * @param request HTTP request
-     * @param response HTTP response
-     * @param filterChain Chain of filters
+     * Runs once per request.
      */
     @Override
     protected void doFilterInternal(
@@ -44,50 +41,55 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
-        // Extract JWT token from Authorization header
-        final String authorizationHeader = request.getHeader("Authorization");
+        // Read Authorization header
+        final String authHeader = request.getHeader(jwtProperties.getHeaderString());
 
-        String username = null;
         String jwt = null;
+        String username = null;
 
-        // Check if header contains Bearer token
-        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-            jwt = authorizationHeader.substring(7); // Remove "Bearer " prefix
-
-            try {
-                username = jwtUtil.extractUsername(jwt);
-            } catch (Exception e) {
-                // Token is invalid or expired
-                logger.error("JWT Token extraction failed: " + e.getMessage());
-            }
+        // If no Authorization header → skip filter
+        if (authHeader == null || !authHeader.startsWith(jwtProperties.getTokenPrefix())) {
+            filterChain.doFilter(request, response);
+            return;
         }
 
-        // If token is valid and user is not already authenticated
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+        try {
 
-            // Load user details
-            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+            // Extract token from header
+            jwt = authHeader.substring(jwtProperties.getTokenPrefix().length());
 
-            // Validate token
+            // Extract username (email)
+            username = jwtUtil.extractUsername(jwt);
+
+        } catch (Exception e) {
+
+            // Token parsing failed (expired, malformed, etc.)
+            logger.warn("Invalid JWT token: " + e.getMessage());
+        }
+
+        // Authenticate user if token is valid and not already authenticated
+        if (username != null &&
+                SecurityContextHolder.getContext().getAuthentication() == null) {
+
+            UserDetails userDetails =
+                    userDetailsService.loadUserByUsername(username);
+
             if (jwtUtil.validateToken(jwt, userDetails.getUsername())) {
 
-                // Create authentication token
-                UsernamePasswordAuthenticationToken authenticationToken =
+                UsernamePasswordAuthenticationToken authToken =
                         new UsernamePasswordAuthenticationToken(
                                 userDetails,
                                 null,
                                 userDetails.getAuthorities()
                         );
 
-                // Set authentication details
-                authenticationToken.setDetails(
+                authToken.setDetails(
                         new WebAuthenticationDetailsSource().buildDetails(request)
                 );
 
-                // Set authentication in security context
-                SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+                SecurityContextHolder.getContext().setAuthentication(authToken);
 
-                logger.info("User authenticated: " + username);
+                logger.debug("JWT authentication successful for user: " + username);
             }
         }
 
