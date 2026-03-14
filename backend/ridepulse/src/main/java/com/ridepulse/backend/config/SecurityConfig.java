@@ -1,6 +1,7 @@
 package com.ridepulse.backend.config;
 
 import com.ridepulse.backend.security.JwtAuthenticationFilter;
+import com.ridepulse.backend.security.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,7 +13,6 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -20,15 +20,20 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import java.util.Arrays;
+
+import java.util.List;
 
 /**
- * CONFIGURATION CLASS:
- * Centralizes all security-related configuration
+ * Security configuration for RidePulse backend.
  *
- * ENCAPSULATION:
- * Security configuration logic is encapsulated here
+ * Responsibilities:
+ * - Configure JWT authentication
+ * - Define public and protected endpoints
+ * - Configure password encoding
+ * - Configure authentication provider
+ * - Configure CORS
  */
+
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
@@ -36,14 +41,10 @@ import java.util.Arrays;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    private final UserDetailsService userDetailsService;
+    private final CustomUserDetailsService customUserDetailsService;
 
     /**
-     * BEAN DEFINITION:
-     * BCryptPasswordEncoder for password hashing
-     * BCrypt is a strong one-way hashing algorithm
-     *
-     * @return PasswordEncoder instance
+     * BCrypt password encoder
      */
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -51,47 +52,76 @@ public class SecurityConfig {
     }
 
     /**
-     * Configure HTTP security
-     * Defines which endpoints are protected and which are public
+     * Authentication provider that connects
+     * UserDetailsService + PasswordEncoder
+     */
+    @Bean
+    public AuthenticationProvider authenticationProvider() {
+
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+
+        provider.setUserDetailsService(customUserDetailsService);
+        provider.setPasswordEncoder(passwordEncoder());
+
+        // IMPORTANT: force email-based login
+        provider.setHideUserNotFoundExceptions(false);
+
+        return provider;
+    }
+    /**
+     * Authentication manager
+     * used during login authentication
+     */
+    @Bean
+    public AuthenticationManager authenticationManager(
+            AuthenticationConfiguration configuration
+    ) throws Exception {
+        return configuration.getAuthenticationManager();
+    }
+    /**
+     * Main Spring Security filter chain
      */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
         http
-                // Disable CSRF (not needed for stateless JWT authentication)
+
+                // Disable CSRF for stateless APIs
                 .csrf(csrf -> csrf.disable())
 
                 // Enable CORS
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
-                // Configure authorization rules
+                // Authorization rules
                 .authorizeHttpRequests(auth -> auth
-                        // Public endpoints (no authentication required)
+
+                        // Public endpoints
                         .requestMatchers(
-                                "/api/auth/**",           // Authentication endpoints
-                                "/api/public/**",         // Public API endpoints
-                                "/error",                 // Error page
-                                "/actuator/health"        // Health check
+                                "/api/auth/**",
+                                "/api/public/**",
+                                "/error",
+                                "/actuator/health"
                         ).permitAll()
 
-                        // Role-based access control
-                        .requestMatchers("/api/admin/**").hasRole("AUTHORITY")
-                        .requestMatchers("/api/passenger/**").hasRole("PASSENGER")
-                        .requestMatchers("/api/driver/**").hasRole("DRIVER")
-                        .requestMatchers("/api/conductor/**").hasRole("CONDUCTOR")
+                        // Role based endpoints
+                        .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
+                        .requestMatchers("/api/passenger/**").hasAuthority("PASSENGER")
+                        .requestMatchers("/api/driver/**").hasAuthority("DRIVER")
+                        .requestMatchers("/api/conductor/**").hasAuthority("CONDUCTOR")
 
-                        // All other requests require authentication
+                        // Everything else requires authentication
                         .anyRequest().authenticated()
                 )
 
-                // Stateless session management (no server-side sessions)
+                // Stateless session (JWT)
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
 
-                // Set authentication provider
+                // Authentication provider
                 .authenticationProvider(authenticationProvider())
 
-                // Add JWT filter before UsernamePasswordAuthenticationFilter
+                // JWT filter before default auth filter
                 .addFilterBefore(
                         jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class
@@ -101,42 +131,25 @@ public class SecurityConfig {
     }
 
     /**
-     * Authentication provider
-     * Connects UserDetailsService with PasswordEncoder
-     */
-    @Bean
-    public AuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(userDetailsService);
-        authProvider.setPasswordEncoder(passwordEncoder());
-        return authProvider;
-    }
-
-    /**
-     * Authentication manager
-     * Used for authenticating users
-     */
-    @Bean
-    public AuthenticationManager authenticationManager(
-            AuthenticationConfiguration config
-    ) throws Exception {
-        return config.getAuthenticationManager();
-    }
-
-    /**
-     * CORS configuration
-     * Allows Flutter app to access API from different origin
+     * Global CORS configuration
      */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("*")); // In production, specify Flutter app URL
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("*"));
-        configuration.setExposedHeaders(Arrays.asList("Authorization"));
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        CorsConfiguration configuration = new CorsConfiguration();
+
+        configuration.setAllowedOrigins(List.of("*"));
+        configuration.setAllowedMethods(
+                List.of("GET", "POST", "PUT", "DELETE", "OPTIONS")
+        );
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setExposedHeaders(List.of("Authorization"));
+
+        UrlBasedCorsConfigurationSource source =
+                new UrlBasedCorsConfigurationSource();
+
         source.registerCorsConfiguration("/**", configuration);
+
         return source;
     }
 }

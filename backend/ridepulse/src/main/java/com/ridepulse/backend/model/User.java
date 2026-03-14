@@ -35,9 +35,8 @@ public class User extends BaseEntity {
     @Column(name = "is_active")
     private Boolean isActive = true;
 
-    public boolean login(String password) {
-        return this.passwordHash.equals(password);
-    }
+
+
 
     public void logout() {
         System.out.println("User " + this.fullName + " logged out");

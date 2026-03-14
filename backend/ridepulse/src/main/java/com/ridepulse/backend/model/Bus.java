@@ -3,27 +3,35 @@ package com.ridepulse.backend.model;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import java.time.LocalDateTime;
 
 /**
- * Bus Entity - Demonstrates ASSOCIATION relationships
+ * Bus Entity
+ *
+ * ENCAPSULATION (OOP Concept):
+ * Encapsulates bus information
  */
 @Entity
 @Table(name = "buses")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper = true)
-public class Bus extends BaseEntity {
+public class Bus {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "bus_id")
-    private Integer busId;
+    private Long busId;
 
-    @Column(name = "bus_number", unique = true, nullable = false)
+    @Column(name = "bus_number", nullable = false, unique = true)
     private String busNumber;
+
+    @Column(name = "owner_id")
+    private Long ownerId;
+
+    @Column(name = "route_id")
+    private Long routeId;
 
     @Column(nullable = false)
     private Integer capacity;
@@ -31,33 +39,68 @@ public class Bus extends BaseEntity {
     @Column(name = "registration_number", unique = true)
     private String registrationNumber;
 
+    @Column
     private String model;
 
+    @Column(name = "year_manufactured")
+    private Integer yearManufactured;
+
     @Column(name = "has_gps_device")
-    private Boolean hasGpsDevice;
+    private Boolean hasGpsDevice = true;
 
     @Column(name = "is_active")
     private Boolean isActive = true;
 
-    /**
-     * ASSOCIATION: Bus belongs to one Route (Many-to-One)
-     */
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "route_id")
-    private Route route;
+    @Column(name = "current_latitude", precision = 10, scale = 7)
+    private Double currentLatitude;
 
-    /**
-     * Business method - Encapsulation
-     */
-    public GPSData updateLocation(double latitude, double longitude) {
-        GPSData gpsData = new GPSData();
-        gpsData.setLatitude(latitude);
-        gpsData.setLongitude(longitude);
-        gpsData.setBus(this);
-        return gpsData;
+    @Column(name = "current_longitude", precision = 10, scale = 7)
+    private Double currentLongitude;
+
+    @Column(name = "last_update")
+    private LocalDateTime lastUpdate;
+
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
     }
 
-    public Route getCurrentRoute() {
-        return this.route;
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+
+    /**
+     * ENCAPSULATION - Business Logic Method
+     * Update current location
+     */
+    public void updateLocation(Double latitude, Double longitude) {
+        this.currentLatitude = latitude;
+        this.currentLongitude = longitude;
+        this.lastUpdate = LocalDateTime.now();
+    }
+
+    /**
+     * ENCAPSULATION - Business Logic Method
+     * Check if GPS data is recent (within last 5 minutes)
+     */
+    public boolean hasRecentGPSData() {
+        if (lastUpdate == null) {
+            return false;
+        }
+
+        long minutesSinceUpdate = java.time.Duration.between(
+                lastUpdate,
+                LocalDateTime.now()
+        ).toMinutes();
+
+        return minutesSinceUpdate <= 5;
     }
 }

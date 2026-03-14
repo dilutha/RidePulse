@@ -188,6 +188,16 @@ class AuthorityHomeScreen extends StatelessWidget {
                     crossAxisSpacing: 16,
                     mainAxisSpacing: 16,
                     children: [
+
+                    FeatureCard(
+                        icon: Icons.report_problem,
+                        title: 'Manage Complaints',
+                        subtitle: 'View and respond',
+                        color: Colors.blue,
+                        onTap: () {
+                        Navigator.pushNamed(context, '/authority/manage-compaints');
+                         },
+                      ),
                       // Real-time Monitoring
                       FeatureCard(
                         icon: Icons.monitor,
@@ -265,6 +275,8 @@ class AuthorityHomeScreen extends StatelessWidget {
                           Navigator.pushNamed(context, '/authority/reports');
                         },
                       ),
+                      // Add this in the grid of menu items
+
                     ],
                   ),
                 ],
