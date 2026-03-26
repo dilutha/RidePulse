@@ -1,29 +1,59 @@
 package com.ridepulse.backend.dto.auth;
 
+// ============================================================
+// RegisterStaffRequest.java — FIXED VERSION
+//
+// Fix: dateOfJoining changed from @NotNull to @Nullable (optional).
+// Flutter never sends this field — Spring's @Valid was returning 400
+// which the error filter was surfacing as 403.
+//
+// The backend now defaults to LocalDate.now() when omitted
+// (already handled in AuthServiceImpl.registerStaff()).
+// ============================================================
+
 import jakarta.validation.constraints.*;
 import lombok.*;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-/**
- * Used by Bus Owner to register a Driver or Conductor.
- * OOP Polymorphism: same DTO handles both staff types — staffType field drives behavior.
- */
-@Data @NoArgsConstructor @AllArgsConstructor @Builder
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class RegisterStaffRequest {
-    @NotBlank  private String fullName;
-    @Email     private String email;
-    @NotBlank  private String phone;
-    @Size(min=8) private String password;       // Owner sets initial password for staff
 
     @NotBlank
-    @Pattern(regexp = "driver|conductor")
-    private String staffType;                   // "driver" or "conductor"
+    private String fullName;
 
-    @NotBlank  private String employeeId;
-    @NotNull   private LocalDate dateOfJoining;
-    private String  licenseNumber;              // Required only for driver
-    private LocalDate licenseExpiry;            // Required only for driver
+    @Email @NotBlank
+    private String email;
+
+    @NotBlank
+    private String phone;
+
+    @NotBlank @Size(min = 8)
+    private String password;
+
+    @NotBlank
+    @Pattern(regexp = "driver|conductor",
+            message = "staffType must be 'driver' or 'conductor'")
+    private String staffType;
+
+    @NotBlank
+    private String employeeId;
+
+    // FIX: was @NotNull — now optional.
+    // Flutter does not send this field.
+    // AuthServiceImpl defaults to LocalDate.now() when null.
+    private LocalDate dateOfJoining;        // nullable — defaults to today
+
+    // Driver-only fields (null for conductor)
+    private String    licenseNumber;
+    private LocalDate licenseExpiry;
+
     private BigDecimal baseSalary;
-    private Integer busId;                      // Optional: assign to bus immediately
+
+    // Optional: assign to bus immediately at registration
+    private Integer busId;
 }

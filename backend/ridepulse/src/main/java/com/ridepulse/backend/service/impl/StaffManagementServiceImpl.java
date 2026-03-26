@@ -32,11 +32,19 @@ public class StaffManagementServiceImpl implements StaffManagementService {
     @Override
     public List<StaffProfileDTO> getStaffByOwner(Integer ownerId) {
         // Fetch all staff assigned to any bus owned by this owner
-        List<StaffBusAssignment> assignments =
-                assignmentRepo.findCurrentAssignmentsByOwner(ownerId);
+        List<Staff> staffList = staffRepo.findAllByOwnerId(ownerId);
 
-        return assignments.stream()
-                .map(a -> buildStaffProfileDTO(a.getStaff(), a.getBus()))
+        return staffList.stream()
+                .map(staff -> {
+                    var assignment = assignmentRepo
+                            .findCurrentAssignmentByStaff(staff.getStaffId())
+                            .orElse(null);
+
+                    return buildStaffProfileDTO(
+                            staff,
+                            assignment != null ? assignment.getBus() : null
+                    );
+                })
                 .collect(Collectors.toList());
     }
 

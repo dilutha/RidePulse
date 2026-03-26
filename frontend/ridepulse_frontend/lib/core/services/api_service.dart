@@ -163,95 +163,41 @@ class ApiService {
       'Authorization': 'Bearer $token',
     };
   }
- 
 
-  // ✅ SAFE GET
   Future<dynamic> _get(String path) async {
-    final res = await http.get(
-      Uri.parse('$_base$path'),
-      headers: await _headers,
-    );
-
-    print("GET $path → ${res.statusCode}");
-    print("BODY → ${res.body}");
-
+    final res = await http.get(Uri.parse('$_base$path'),
+        headers: await _headers);
     _check(res);
-
-    if (res.body.trim().isEmpty) return [];
-
     return jsonDecode(res.body);
   }
 
-  // ✅ SAFE POST
   Future<dynamic> _post(String path, Map<String, dynamic> body) async {
-    final res = await http.post(
-      Uri.parse('$_base$path'),
-      headers: await _headers,
-      body: jsonEncode(body),
-    );
-
-    print("POST $path → ${res.statusCode}");
-    print("BODY → ${res.body}");
-
+    final res = await http.post(Uri.parse('$_base$path'),
+        headers: await _headers, body: jsonEncode(body));
     _check(res);
-
-    if (res.body.trim().isEmpty) return {};
-
     return jsonDecode(res.body);
   }
 
-  // ✅ SAFE PATCH
   Future<dynamic> _patch(String path, Map<String, dynamic> body) async {
-    final res = await http.patch(
-      Uri.parse('$_base$path'),
-      headers: await _headers,
-      body: jsonEncode(body),
-    );
-
-    print("PATCH $path → ${res.statusCode}");
-    print("BODY → ${res.body}");
-
+    final res = await http.patch(Uri.parse('$_base$path'),
+        headers: await _headers, body: jsonEncode(body));
     _check(res);
-
-    if (res.body.trim().isEmpty) return {};
-
     return jsonDecode(res.body);
   }
 
-  // ✅ SAFE DELETE
   Future<dynamic> _delete(String path) async {
-    final res = await http.delete(
-      Uri.parse('$_base$path'),
-      headers: await _headers,
-    );
-
-    print("DELETE $path → ${res.statusCode}");
-    print("BODY → ${res.body}");
-
+    final res = await http.delete(Uri.parse('$_base$path'),
+        headers: await _headers);
     _check(res);
-
-    if (res.body.trim().isEmpty) return {};
-
     return jsonDecode(res.body);
   }
 
-  // ✅ SAFE ERROR HANDLER
   void _check(http.Response res) {
     if (res.statusCode >= 400) {
-      if (res.body.isNotEmpty) {
-        try {
-          final body = jsonDecode(res.body);
-          throw Exception(body['message'] ?? 'Error ${res.statusCode}');
-        } catch (_) {
-          throw Exception('Error ${res.statusCode}');
-        }
-      } else {
-        throw Exception('Error ${res.statusCode}');
-      }
+      final body = jsonDecode(res.body);
+      throw Exception(body['message'] ?? 'Error ${res.statusCode}');
     }
   }
-
-  
 
   // ── Routes ────────────────────────────────────────────────
   Future<List<RouteModel>> getRoutes() async {
