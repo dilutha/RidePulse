@@ -116,6 +116,14 @@ public class AuthServiceImpl implements AuthService {
      * OOP Polymorphism: staffType field determines which fields are required
      *                   and how the staff entity is configured.
      */
+    // ============================================================
+// AuthServiceImpl.java — ONLY THE registerStaff() METHOD CHANGES
+// Replace the existing registerStaff() with this version.
+// Everything else in the file stays the same.
+// ============================================================
+
+// FIND the existing registerStaff() method and REPLACE with:
+
     @Override
     @Transactional
     public AuthResponse registerStaff(RegisterStaffRequest req, Integer ownerId) {
@@ -131,16 +139,26 @@ public class AuthServiceImpl implements AuthService {
                 req.getPassword(), userRole);
         userRepo.save(user);
 
-        // Build staff profile — Polymorphism: licenseNumber only for driver
+        // Resolve the bus owner for direct linking
+        // OOP Encapsulation: owner resolution is hidden here
+        BusOwner busOwner = null;
+        if (ownerId != null) {
+            busOwner = busOwnerRepo.findById(ownerId).orElse(null);
+        }
+
+        // Build staff profile
+        // OOP Polymorphism: licenseNumber/licenseExpiry only populated for driver
         Staff staff = Staff.builder()
                 .user(user)
+                .busOwner(busOwner)                        // NEW: direct owner link
                 .staffType(Staff.StaffType.valueOf(req.getStaffType()))
                 .employeeId(req.getEmployeeId())
                 .dateOfJoining(req.getDateOfJoining() != null
                         ? req.getDateOfJoining() : LocalDate.now())
-                .licenseNumber(req.getLicenseNumber())       // null for conductor
-                .licenseExpiry(req.getLicenseExpiry())        // null for conductor
-                .baseSalary(req.getBaseSalary())
+                .licenseNumber(req.getLicenseNumber())
+                .licenseExpiry(req.getLicenseExpiry())
+                .baseSalary(req.getBaseSalary() != null
+                        ? req.getBaseSalary() : java.math.BigDecimal.ZERO)
                 .isActive(true)
                 .build();
         staffRepo.save(staff);
@@ -161,6 +179,7 @@ public class AuthServiceImpl implements AuthService {
 
         return buildAuthResponse(user, null, staff.getStaffId());
     }
+
 
     // ── Private helpers (Encapsulation: hidden from callers) ──
 

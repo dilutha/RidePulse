@@ -27,7 +27,12 @@ public class RosterDetailDTO {
     private String  endLocation;
     private Double  baseFare;
 
+    private String  staffName;
+    private String  staffType;
+    private String  employeeId;
+    private Integer staffId;
+
     // Active trip (null if no trip started yet)
     private Integer activeTripId;
-    private String  tripStatus;      // in_progress | completed | null
+    private String  tripStatus;// in_progress | completed | null
 }

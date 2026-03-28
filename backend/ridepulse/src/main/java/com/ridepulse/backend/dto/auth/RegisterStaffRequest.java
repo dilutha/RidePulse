@@ -1,26 +1,16 @@
 package com.ridepulse.backend.dto.auth;
 
 // ============================================================
-// RegisterStaffRequest.java — FIXED VERSION
-//
-// Fix: dateOfJoining changed from @NotNull to @Nullable (optional).
-// Flutter never sends this field — Spring's @Valid was returning 400
-// which the error filter was surfacing as 403.
-//
-// The backend now defaults to LocalDate.now() when omitted
-// (already handled in AuthServiceImpl.registerStaff()).
+// RegisterStaffRequest.java — UPDATED
+// ADD: ownerId field so public registration links staff to owner
 // ============================================================
 
 import jakarta.validation.constraints.*;
 import lombok.*;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Data @NoArgsConstructor @AllArgsConstructor @Builder
 public class RegisterStaffRequest {
 
     @NotBlank
@@ -43,17 +33,15 @@ public class RegisterStaffRequest {
     @NotBlank
     private String employeeId;
 
-    // FIX: was @NotNull — now optional.
-    // Flutter does not send this field.
-    // AuthServiceImpl defaults to LocalDate.now() when null.
-    private LocalDate dateOfJoining;        // nullable — defaults to today
+    // FIX: was @NotNull — changed to nullable with default in service
+    private LocalDate dateOfJoining;
 
-    // Driver-only fields (null for conductor)
-    private String    licenseNumber;
-    private LocalDate licenseExpiry;
-
+    private String    licenseNumber;   // Required only for driver
+    private LocalDate licenseExpiry;   // Required only for driver
     private BigDecimal baseSalary;
+    private Integer   busId;           // Optional: assign to bus immediately
 
-    // Optional: assign to bus immediately at registration
-    private Integer busId;
+    // NEW FIELD: Bus owner's ID — used when endpoint is called publicly
+    // (without a bus_owner JWT token). The Flutter app sends this explicitly.
+    private Integer ownerId;
 }
