@@ -127,14 +127,14 @@ ridepulse/
 │   └── flutter_app/
 │
 ├── predict_service/          # ML Microservice (Python)
-│   ├── app.py                # API entry point
-│   ├── config.py             # Configuration
-│   ├── feature_builder.py    # Feature engineering
-│   ├── model_loader.py       # Load ML model
-│   └── Dockerfile            # Container setup
+│   ├── app.py                # API entry point (Flask/FastAPI)
+│   ├── config.py             # Configuration (model paths, constants)
+│   ├── feature_builder.py    # Feature engineering logic
+│   ├── model_loader.py       # Load trained ML models
+│   └── Dockerfile            # Containerization
 │
 └── database/
-└── migrations/           # SQL migration scripts
+    └── migrations/           # SQL migration scripts
 
 
 
