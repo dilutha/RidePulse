@@ -13,69 +13,42 @@ import '../models/conductor_models.dart';
 import '../models/driver_models.dart';
 import '../models/passenger_models.dart';
 
+import '../models/authority_models.dart';
+
+
 const String _base = 'http://localhost:8080/api/v1';
 
-// ── Provider declarations ────────────────────────────────────
-
-final apiServiceProvider = Provider<ApiService>((ref) => ApiService());
-
-// Bus owner providers
-final busListProvider = FutureProvider.autoDispose<List<BusModel>>((ref) async {
-  return ref.read(apiServiceProvider).getBuses();
+final authorityDashboardStatsProvider =
+    FutureProvider.autoDispose<AuthorityDashboardStats>((ref) async {
+  return ref.read(apiServiceProvider).getAuthorityDashboardStats();
 });
 
-final routeDropdownProvider = FutureProvider.autoDispose<List<RouteModel>>((ref) async {
-  return ref.read(apiServiceProvider).getRoutes();
+final authorityBusesProvider =
+    FutureProvider.autoDispose<List<AuthorityBus>>((ref) async {
+  return ref.read(apiServiceProvider).getAuthorityBuses();
 });
 
-final busServiceProvider = Provider<ApiService>((ref) => ApiService());
-
-final busLocationsProvider = FutureProvider.autoDispose<List<BusLocationModel>>((ref) async {
-  return ref.read(apiServiceProvider).getLiveBusLocations();
+final authorityDriversProvider =
+    FutureProvider.autoDispose<List<AuthorityStaff>>((ref) async {
+  return ref.read(apiServiceProvider).getAuthorityDrivers();
 });
 
-// Staff providers
-// OOP Polymorphism: same provider factory works for both driver and conductor
-final staffListProvider = FutureProvider.autoDispose
-    .family<List<StaffModel>, String>((ref, staffType) async {
-  return ref.read(apiServiceProvider).getStaff(staffType: staffType);
+final authorityConductorsProvider =
+    FutureProvider.autoDispose<List<AuthorityStaff>>((ref) async {
+  return ref.read(apiServiceProvider).getAuthorityConductors();
 });
 
-final staffServiceProvider = Provider<ApiService>((ref) => ApiService());
-
-// Revenue providers
-final monthlyRevenueProvider = FutureProvider.autoDispose
-    .family<List<MonthlyRevenueModel>, ({int month, int year})>(
-        (ref, params) async {
-  return ref.read(apiServiceProvider)
-      .getMonthlyRevenue(month: params.month, year: params.year);
+final authorityOwnersProvider =
+    FutureProvider.autoDispose<List<AuthorityOwner>>((ref) async {
+  return ref.read(apiServiceProvider).getAuthorityOwners();
 });
 
-// Welfare provider
-final welfareProvider = FutureProvider.autoDispose
-    .family<List<StaffModel>, ({int month, int year})>(
-        (ref, params) async {
-  return ref.read(apiServiceProvider)
-      .getWelfareSummary(month: params.month, year: params.year);
+final authorityFaresProvider =
+    FutureProvider.autoDispose<List<FareConfig>>((ref) async {
+  return ref.read(apiServiceProvider).getAuthorityFares();
 });
 
-// Complaint providers
-final myComplaintsProvider =
-    FutureProvider.autoDispose<List<ComplaintSummary>>((ref) async {
-  return ref.read(apiServiceProvider).getMyComplaints();
-});
 
-final authorityComplaintsProvider = FutureProvider.autoDispose
-    .family<List<ComplaintSummary>, ({String? status, String? category})>(
-        (ref, params) async {
-  return ref.read(apiServiceProvider)
-      .getAuthorityComplaints(status: params.status, category: params.category);
-});
-
-final complaintStatsProvider =
-    FutureProvider.autoDispose<ComplaintStats>((ref) async {
-  return ref.read(apiServiceProvider).getComplaintStats();
-});
 
 // ── Conductor providers ───────────────────────────────────────
 final conductorDashboardProvider =
@@ -573,3 +546,50 @@ class ApiService {
     return data.map((e) => ConductorWelfareModel.fromJson(e)).toList();
   }
 }
+
+// ── Authority — Dashboard ──────────────────────────────────
+  Future<AuthorityDashboardStats> getAuthorityDashboardStats() async {
+    final data = await _get('/authority/dashboard/stats');
+    return AuthorityDashboardStats.fromJson(data);
+  }
+
+  // ── Authority — Buses ──────────────────────────────────────
+  Future<List<AuthorityBus>> getAuthorityBuses() async {
+    final data = await _get('/authority/buses') as List;
+    return data.map((e) => AuthorityBus.fromJson(e)).toList();
+  }
+
+  // ── Authority — Staff ──────────────────────────────────────
+  Future<List<AuthorityStaff>> getAuthorityDrivers() async {
+    final data = await _get('/authority/staff/drivers') as List;
+    return data.map((e) => AuthorityStaff.fromJson(e)).toList();
+  }
+
+  Future<List<AuthorityStaff>> getAuthorityConductors() async {
+    final data = await _get('/authority/staff/conductors') as List;
+    return data.map((e) => AuthorityStaff.fromJson(e)).toList();
+  }
+
+  // ── Authority — Owners ─────────────────────────────────────
+  Future<List<AuthorityOwner>> getAuthorityOwners() async {
+    final data = await _get('/authority/owners') as List;
+    return data.map((e) => AuthorityOwner.fromJson(e)).toList();
+  }
+
+  // ── Authority — Fares ──────────────────────────────────────
+  Future<List<FareConfig>> getAuthorityFares() async {
+    final data = await _get('/authority/fares') as List;
+    return data.map((e) => FareConfig.fromJson(e)).toList();
+  }
+
+  Future<FareConfig> getAuthorityFare(int routeId) async {
+    final data = await _get('/authority/fares/$routeId');
+    return FareConfig.fromJson(data);
+  }
+
+  Future<FareConfig> updateFare(int routeId, double baseFare) async {
+    final data = await _patch('/authority/fares',
+        {'routeId': routeId, 'baseFare': baseFare});
+    return FareConfig.fromJson(data);
+  }
+
