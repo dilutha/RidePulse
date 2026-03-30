@@ -51,4 +51,11 @@ public interface StaffRepository extends JpaRepository<Staff, Integer> {
 
     // Used by: validation — prevent duplicate employee IDs
     boolean existsByEmployeeId(String employeeId);
+
+    List<Staff> findByStaffType(Staff.StaffType staffType);
+
+    // Authority + dashboard: count staff by type
+    long countByStaffType(Staff.StaffType staffType);
+
+
 }

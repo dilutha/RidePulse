@@ -348,27 +348,38 @@ public class ConductorServiceImpl implements ConductorService {
                 .orElseThrow(() -> new RuntimeException("Staff not found: " + staffId));
     }
 
+
     /**
-     * Fare calculation — Polymorphism: proportional by stop count.
-     * fare = baseFare × (stops between boarding and alighting / total stops)
+     * Calculates ticket fare using Sri Lanka NTPS fare rules.
+     * OOP Encapsulation: all fare logic is hidden here.
+     * OOP Polymorphism: result changes based on stop count.
+     *
+     * Formula: fare = baseFare + (stopsBetween - 1) × 8
+     * Bounds:  minimum LKR 30, maximum LKR 2422
      */
     private BigDecimal calculateFare(Route route, RouteStop boarding,
                                      RouteStop alighting) {
-        int diff = Math.abs(alighting.getStopSequence() - boarding.getStopSequence());
-        int totalStops = stopRepo.findByRoute_RouteIdOrderByStopSequence(
-                route.getRouteId()).size() - 1;
+        // National fare constants (Encapsulation: defined here, not scattered)
+        final BigDecimal MIN_FARE      = new BigDecimal("30.00");
+        final BigDecimal MAX_FARE      = new BigDecimal("2422.00");
+        final BigDecimal FARE_PER_STOP = new BigDecimal("8.00");
 
-        if (totalStops <= 0) return route.getBaseFare();
+        int stopsBetween = Math.abs(
+                alighting.getStopSequence() - boarding.getStopSequence());
 
-        BigDecimal ratio = BigDecimal.valueOf(diff)
-                .divide(BigDecimal.valueOf(totalStops), 4, RoundingMode.HALF_UP);
+        if (stopsBetween == 0) return MIN_FARE;  // same stop = minimum
 
-        BigDecimal fare = route.getBaseFare().multiply(ratio);
+        // Fare = baseFare + (stops - 1) × 8
+        BigDecimal fare = route.getBaseFare()
+                .add(FARE_PER_STOP.multiply(BigDecimal.valueOf(stopsBetween - 1)));
 
-        // Minimum fare = 10 LKR
-        BigDecimal minFare = BigDecimal.TEN;
-        return fare.compareTo(minFare) < 0 ? minFare : fare.setScale(2, RoundingMode.HALF_UP);
+        // Clamp to national bounds
+        if (fare.compareTo(MIN_FARE) < 0) fare = MIN_FARE;
+        if (fare.compareTo(MAX_FARE) > 0) fare = MAX_FARE;
+
+        return fare.setScale(2, RoundingMode.HALF_UP);
     }
+
 
     private String generateTicketNumber() {
         String date = LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE);

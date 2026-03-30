@@ -1,4 +1,4 @@
-package com.ridepulse.dto;
+package com.ridepulse.backend.dto;
 
 
 import lombok.*;

@@ -1,8 +1,8 @@
-package com.ridepulse.controller;
+package com.ridepulse.backend.controller;
 
 
-import com.ridepulse.dto.*;
-import com.ridepulse.service.AuthorityService;
+import com.ridepulse.backend.dto.*;
+import com.ridepulse.backend.service.AuthorityService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

@@ -80,4 +80,10 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Integer> {
           AND c.status IN ('submitted', 'under_review')
         """)
     long countOpenComplaintsByOwner(@Param("ownerId") Integer ownerId);
+
+
+    // Authority dashboard: count complaints by multiple statuses
+    @Query("SELECT COUNT(c) FROM Complaint c WHERE c.status IN :statuses")
+    long countByStatusIn(@Param("statuses") List<String> statuses);
+
 }

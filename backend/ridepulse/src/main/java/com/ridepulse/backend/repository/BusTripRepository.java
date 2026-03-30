@@ -40,4 +40,6 @@ public interface BusTripRepository extends JpaRepository<BusTrip, Integer> {
         ORDER BY t.tripStart DESC
         """)
     List<BusTrip> findActiveTripsByRoute(@Param("routeId") Integer routeId);
+
+    long countByStatus(String status);
 }

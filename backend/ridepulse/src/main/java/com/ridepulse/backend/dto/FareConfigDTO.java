@@ -1,10 +1,9 @@
-package com.ridepulse.dto;
+package com.ridepulse.backend.dto;
 
 
 import lombok.*;
 import jakarta.validation.constraints.*;
 import java.util.List;
-
 
 
 
@@ -25,8 +24,3 @@ public class FareConfigDTO {
     private List<StopFarePreview> farePreview;
 }
 
-@Data @NoArgsConstructor @AllArgsConstructor @Builder
-public static class StopFarePreview {
-    private Integer stopCount;
-    private Double  fare;
-}
