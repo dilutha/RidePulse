@@ -35,6 +35,10 @@ public class IssueTicketRequest {
     @Pattern(regexp = "cash|digital", message = "Payment method must be cash or digital")
     private String paymentMethod = "cash";
 
+    @Min(value = 1, message = "Ticket count must be at least 1")
+    @Max(value = 50, message = "Ticket count is too high for one issue action")
+    private Integer ticketCount = 1;
+
     // Optional: link ticket to registered passenger
     private String passengerUserId;  // UUID string, null for walk-in passengers
 }

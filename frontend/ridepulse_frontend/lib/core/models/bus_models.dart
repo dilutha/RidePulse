@@ -29,7 +29,7 @@ class RouteModel {
   );
 
   // Encapsulation: display string is built by the model
-  String get displayName => '${routeNumber} — $routeName';
+  String get displayName => '$routeNumber — $routeName';
 }
 
 class BusModel {

@@ -2,6 +2,7 @@
 // features/conductor/screens/conductor_trip_screen.dart
 // Start trip, view live stats, stop trip
 // ============================================================
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -17,11 +18,37 @@ class ConductorTripScreen extends ConsumerStatefulWidget {
 class _ConductorTripScreenState extends ConsumerState<ConductorTripScreen> {
   bool _loading = false;
   String? _error;
+  Timer? _gpsTimer;
+
+  @override
+  void dispose() {
+    _gpsTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startGpsLoop(int tripId) {
+    _gpsTimer?.cancel();
+    _gpsTimer = Timer.periodic(const Duration(seconds: 15), (_) async {
+      try {
+        await ref.read(apiServiceProvider).sendConductorGpsUpdate(
+          tripId: tripId,
+          latitude: 6.9271,
+          longitude: 79.8612,
+        );
+      } catch (_) {}
+    });
+  }
 
   Future<void> _startTrip(RosterModel roster) async {
     setState(() { _loading = true; _error = null; });
     try {
-      await ref.read(apiServiceProvider).startTrip(roster.rosterId);
+      final trip = await ref.read(apiServiceProvider).startTrip(roster.rosterId);
+      await ref.read(apiServiceProvider).sendConductorGpsUpdate(
+        tripId: trip.tripId,
+        latitude: 6.9271,
+        longitude: 79.8612,
+      );
+      _startGpsLoop(trip.tripId);
       ref.invalidate(conductorDashboardProvider);
       ref.invalidate(conductorRosterTodayProvider);
     } catch (e) {
@@ -34,7 +61,7 @@ class _ConductorTripScreenState extends ConsumerState<ConductorTripScreen> {
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('Stop Trip'),
-        content: Text(
+        content: const Text(
             'Stop the current trip on \${trip.busNumber}?\n'
                 'Tickets issued: \${trip.ticketsIssuedCount}\n'
                 'Fare collected: LKR \${trip.totalFareCollected.toStringAsFixed(2)}'),
@@ -50,13 +77,16 @@ class _ConductorTripScreenState extends ConsumerState<ConductorTripScreen> {
     );
     if (confirm != true) return;
     setState(() { _loading = true; _error = null; });
+    _gpsTimer?.cancel();
     try {
       await ref.read(apiServiceProvider).stopTrip(trip.tripId);
       ref.invalidate(conductorDashboardProvider);
       ref.invalidate(conductorRosterTodayProvider);
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Trip completed successfully'),
               backgroundColor: Colors.green));
+      }
     } catch (e) {
       setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
     } finally { setState(() => _loading = false); }
@@ -67,8 +97,10 @@ class _ConductorTripScreenState extends ConsumerState<ConductorTripScreen> {
       await ref.read(apiServiceProvider).updateCrowdLevel(trip.tripId, count);
       ref.invalidate(conductorDashboardProvider);
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+      }
     }
   }
 
@@ -263,17 +295,17 @@ class _TripLiveCard extends StatelessWidget {
       Text(trip.routeName,
           style: const TextStyle(color: Colors.white,
               fontSize: 18, fontWeight: FontWeight.bold)),
-      Text('Started: \${trip.tripStart}',
-          style: const TextStyle(color: Colors.white70, fontSize: 12)),
+      const Text('Started: \${trip.tripStart}',
+          style: TextStyle(color: Colors.white70, fontSize: 12)),
       const SizedBox(height: 14),
-      Row(children: [
+      const Row(children: [
         _LiveStat('Tickets', '\${trip.ticketsIssuedCount}',
             Icons.confirmation_number),
-        const SizedBox(width: 20),
+        SizedBox(width: 20),
         _LiveStat('Fare Collected',
             'LKR \${trip.totalFareCollected.toStringAsFixed(2)}',
             Icons.payments_outlined),
-        const SizedBox(width: 20),
+        SizedBox(width: 20),
         _LiveStat('Passengers',
             '\${trip.currentPassengerCount}', Icons.people_outline),
       ]),
@@ -358,8 +390,8 @@ class _CrowdCounterState extends State<_CrowdCounter> {
                   ? () { setState(() => _count--); widget.onUpdate(_count); }
                   : null),
           const SizedBox(width: 24),
-          Text('\$_count',
-              style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
+          const Text('\$_count',
+              style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
           const SizedBox(width: 24),
           IconButton(
               style: IconButton.styleFrom(

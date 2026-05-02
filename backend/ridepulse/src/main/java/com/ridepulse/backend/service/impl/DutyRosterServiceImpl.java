@@ -72,6 +72,10 @@ public class DutyRosterServiceImpl implements DutyRosterService {
 
         Staff staff = staffRepo.findById(req.getStaffId())
                 .orElseThrow(() -> new RuntimeException("Staff not found"));
+        if (staff.getBusOwner() == null
+                || !staff.getBusOwner().getOwnerId().equals(ownerId)) {
+            throw new RuntimeException("Staff member is not under your account");
+        }
 
         // Prevent duplicate roster for same staff on same date
         boolean alreadyScheduled = rosterRepo

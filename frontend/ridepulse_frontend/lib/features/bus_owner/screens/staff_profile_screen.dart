@@ -60,13 +60,15 @@ class _StaffProfileScreenState
           child: FutureBuilder<List<StaffModel>>(
             future: _future,
             builder: (_, snap) {
-              if (snap.connectionState == ConnectionState.waiting)
+              if (snap.connectionState == ConnectionState.waiting) {
                 return const _LoadingState();
+              }
               final staff = snap.data?.firstWhere(
                   (s) => s.staffId == widget.staffId,
                   orElse: () => throw Exception('Not found'));
-              if (staff == null)
+              if (staff == null) {
                 return const _NotFoundState();
+              }
               _fadeCtrl.forward();
               return FadeTransition(
                 opacity: _fadeAnim,
@@ -200,7 +202,7 @@ class _BodyState extends ConsumerState<_Body> {
         const SizedBox(height: 28),
 
         // ── Info card ─────────────────────────────────
-        _SectionLabel('Details'),
+        const _SectionLabel('Details'),
         const SizedBox(height: 10),
         _GlassCard(
           child: Column(children: [
@@ -226,7 +228,7 @@ class _BodyState extends ConsumerState<_Body> {
         const SizedBox(height: 20),
 
         // ── Welfare card ──────────────────────────────
-        _SectionLabel('Welfare Balance'),
+        const _SectionLabel('Welfare Balance'),
         const SizedBox(height: 10),
         _GlassCard(
           accentColor: const Color(0xFF4ADE80),
@@ -250,7 +252,7 @@ class _BodyState extends ConsumerState<_Body> {
         const SizedBox(height: 20),
 
         // ── Salary card ───────────────────────────────
-        _SectionLabel('Base Salary'),
+        const _SectionLabel('Base Salary'),
         const SizedBox(height: 10),
         _GlassCard(
           child: Column(
@@ -330,8 +332,10 @@ class _BodyState extends ConsumerState<_Body> {
                               .updateSalary(s.staffId,
                                   double.parse(_salaryCtrl.text));
                           setState(() => _editing = false);
-                          if (mounted) _showToast(
+                          if (mounted) {
+                            _showToast(
                               context, 'Salary updated');
+                          }
                         } catch (e) {
                           setState(() => _saveError = e
                               .toString()

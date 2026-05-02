@@ -56,7 +56,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
     for (final c in [
       _name, _email, _phone, _pass, _bizName, _nic,
       _address, _designation, _empId, _license, _salary
-    ]) c.dispose();
+    ]) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -184,7 +186,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                           const SizedBox(height: 28),
 
                           // ── Common fields ───────────────────
-                          _SectionLabel('Personal Info'),
+                          const _SectionLabel('Personal Info'),
                           const SizedBox(height: 12),
                           _DarkField(controller: _name,
                               label: 'Full Name',
@@ -227,7 +229,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                           // ── Bus owner extras ─────────────────
                           if (widget.type == 'bus_owner') ...[
                             const SizedBox(height: 24),
-                            _SectionLabel('Business Details'),
+                            const _SectionLabel('Business Details'),
                             const SizedBox(height: 12),
                             _DarkField(controller: _bizName,
                                 label: 'Business Name',
@@ -247,7 +249,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                           // ── Authority extras ─────────────────
                           if (widget.type == 'authority') ...[
                             const SizedBox(height: 24),
-                            _SectionLabel('Authority Details'),
+                            const _SectionLabel('Authority Details'),
                             const SizedBox(height: 12),
                             _DarkField(controller: _designation,
                                 label: 'Designation / Title',
@@ -257,7 +259,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                           // ── Staff extras ──────────────────────
                           if (widget.type == 'staff') ...[
                             const SizedBox(height: 24),
-                            _SectionLabel('Staff Details'),
+                            const _SectionLabel('Staff Details'),
                             const SizedBox(height: 12),
                             _StaffTypeSelector(
                               value: _staffType,

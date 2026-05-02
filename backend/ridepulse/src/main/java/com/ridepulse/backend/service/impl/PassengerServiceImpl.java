@@ -2,6 +2,7 @@ package com.ridepulse.backend.service.impl;
 
 import com.ridepulse.backend.dto.*;
 import com.ridepulse.backend.entity.*;
+import com.ridepulse.backend.prediction.LstmPredictionClient;
 import com.ridepulse.backend.repository.*;
 import com.ridepulse.backend.service.PassengerService;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,7 @@ public class PassengerServiceImpl implements PassengerService {
     private final CrowdLevelRepository  crowdRepo;
     private final CrowdPredictionRepository predictionRepo;
     private final BusRepository       busRepo;
+    private final LstmPredictionClient lstmClient;
 
     private static final DateTimeFormatter DT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
@@ -180,6 +182,66 @@ public class PassengerServiceImpl implements PassengerService {
             .hasData(true)
             .slots(slots)
             .build();
+    }
+
+    @Override
+    public CrowdPredictionDTO getSingleCrowdPrediction(
+            Integer routeId, String date, String time, String location) {
+        Route route = routeRepo.findById(routeId)
+            .orElseThrow(() -> new RuntimeException("Route not found: " + routeId));
+
+        boolean validLocation = location == null || location.isBlank()
+            || stopRepo.findByRoute_RouteIdOrderByStopSequence(routeId).stream()
+                .anyMatch(s -> s.getStopName().equalsIgnoreCase(location));
+        if (!validLocation) {
+            throw new RuntimeException("Selected location is not a stop on this route");
+        }
+
+        int capacity = (int) busRepo.findByRoute_RouteId(routeId).stream()
+            .mapToInt(Bus::getCapacity)
+            .average()
+            .orElse(52);
+
+        String target = (date != null && !date.isBlank() ? date : LocalDate.now().toString())
+            + "T"
+            + (time != null && !time.isBlank() ? time : "08:00")
+            + ":00";
+
+        CrowdPredictionDTO prediction = lstmClient.requestSinglePrediction(
+            routeId, route.getRouteName(), target, capacity,
+            "clear", 0.0, "medium");
+
+        if (prediction != null) {
+            prediction.setMessage(location != null && !location.isBlank()
+                ? "Prediction for " + location
+                : null);
+            return prediction;
+        }
+
+        return CrowdPredictionDTO.builder()
+            .routeId(routeId)
+            .routeName(route.getRouteName())
+            .predictionDate(target.substring(0, 10))
+            .timeSlot(target.substring(11, 16))
+            .predictedPercentage(0.0)
+            .predictedCategory("unknown")
+            .confidenceScore(0.0)
+            .modelVersion("unavailable")
+            .isAvailable(false)
+            .message("LSTM prediction service is not available")
+            .build();
+    }
+
+    @Override
+    public List<StopDTO> getRouteStops(Integer routeId) {
+        return stopRepo.findByRoute_RouteIdOrderByStopSequence(routeId)
+            .stream()
+            .map(s -> StopDTO.builder()
+                .stopId(s.getStopId())
+                .stopName(s.getStopName())
+                .stopSequence(s.getStopSequence())
+                .build())
+            .collect(Collectors.toList());
     }
 
     // ── Private helpers (Encapsulation) ──────────────────────

@@ -94,7 +94,7 @@ class _PassengerHomeScreenState extends ConsumerState<PassengerHomeScreen>
                     const SizedBox(height: 28),
 
                     // ── Feature grid ───────────────────
-                    _SectionLabel('What do you need?'),
+                    const _SectionLabel('What do you need?'),
                     const SizedBox(height: 12),
                     GridView.count(
                       crossAxisCount: 2,

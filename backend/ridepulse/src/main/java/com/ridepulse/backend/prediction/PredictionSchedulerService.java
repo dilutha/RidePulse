@@ -156,7 +156,7 @@ public class PredictionSchedulerService {
         Map<String, Integer> map = new HashMap<>();
         for (Route route : routes) {
             List<com.ridepulse.backend.entity.Bus> buses =
-                    busRepo.findByOwner_OwnerId(route.getRouteId()); // approximate
+                    busRepo.findByRoute_RouteId(route.getRouteId());
             int avgCapacity = buses.isEmpty() ? 52
                     : (int) buses.stream()
                     .mapToInt(com.ridepulse.backend.entity.Bus::getCapacity)

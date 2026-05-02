@@ -934,7 +934,7 @@ class _DarkDropdown<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) =>
       DropdownButtonFormField<T>(
-        value: value,
+        initialValue: value,
         isExpanded: true,
         dropdownColor: const Color(0xFF1A2540),
         style: const TextStyle(color: Colors.white, fontSize: 14),

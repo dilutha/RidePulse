@@ -140,7 +140,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                           ],
 
                           // Email
-                          _FieldLabel('Email address'),
+                          const _FieldLabel('Email address'),
                           const SizedBox(height: 7),
                           _DarkField(
                             controller: _email,
@@ -155,7 +155,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                           const SizedBox(height: 14),
 
                           // Password
-                          _FieldLabel('Password'),
+                          const _FieldLabel('Password'),
                           const SizedBox(height: 7),
                           _DarkField(
                             controller: _pass,

@@ -123,8 +123,8 @@ class _WideLayout extends StatelessWidget {
                     size: 14, color: Color(0xFF4ADE80)),
               ),
               const SizedBox(width: 10),
-              Text('Fleet',
-                  style: const TextStyle(
+              const Text('Fleet',
+                  style: TextStyle(
                       color: Colors.white,
                       fontSize: 14,
                       fontWeight: FontWeight.w700)),
@@ -578,12 +578,12 @@ class _ErrorState extends StatelessWidget {
                 ),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Row(mainAxisSize: MainAxisSize.min,
+              child: const Row(mainAxisSize: MainAxisSize.min,
                   children: [
-                const Icon(Icons.refresh_rounded,
+                Icon(Icons.refresh_rounded,
                     size: 16, color: Colors.white),
-                const SizedBox(width: 8),
-                const Text('Retry',
+                SizedBox(width: 8),
+                Text('Retry',
                     style: TextStyle(
                         color: Colors.white,
                         fontSize: 14,

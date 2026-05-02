@@ -85,4 +85,21 @@ public class PassengerController {
         return ResponseEntity.ok(
             passengerService.getCrowdPredictions(routeId, date));
     }
+
+    @GetMapping("/routes/{routeId}/stops")
+    public ResponseEntity<List<StopDTO>> getRouteStops(
+            @PathVariable Integer routeId) {
+        return ResponseEntity.ok(passengerService.getRouteStops(routeId));
+    }
+
+    @PostMapping("/routes/{routeId}/predictions/single")
+    public ResponseEntity<CrowdPredictionDTO> getSingleCrowdPrediction(
+            @PathVariable Integer routeId,
+            @RequestBody(required = false) java.util.Map<String, String> body) {
+        return ResponseEntity.ok(passengerService.getSingleCrowdPrediction(
+            routeId,
+            body != null ? body.get("date") : null,
+            body != null ? body.get("time") : null,
+            body != null ? body.get("location") : null));
+    }
 }

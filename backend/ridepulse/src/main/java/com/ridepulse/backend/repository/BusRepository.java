@@ -26,6 +26,9 @@ public interface BusRepository extends JpaRepository<Bus, Integer> {
     // Used by: WelfareServiceImpl.processMonthlyWelfare() — all active buses
     List<Bus> findByIsActiveTrue();
 
+    // Used by: prediction capacity lookup and demo route flow
+    List<Bus> findByRoute_RouteId(Integer routeId);
+
     // Used by: BusManagementServiceImpl.addBus() — check number uniqueness
     boolean existsByBusNumber(String busNumber);
 

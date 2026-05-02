@@ -149,6 +149,7 @@ class CrowdPredictionSlot {
   final String  predictedCategory;
   final double? confidenceScore;
   final bool    isAvailable;
+  final String? message;
 
   CrowdPredictionSlot({
     required this.timeSlot,
@@ -156,15 +157,20 @@ class CrowdPredictionSlot {
     required this.predictedCategory,
     this.confidenceScore,
     required this.isAvailable,
+    this.message,
   });
 
   factory CrowdPredictionSlot.fromJson(Map<String, dynamic> j) =>
       CrowdPredictionSlot(
-    timeSlot:             j['timeSlot']            ?? '',
-    predictedPercentage:  (j['predictedPercentage'] as num?)?.toDouble() ?? 0,
-    predictedCategory:    j['predictedCategory']    ?? 'unknown',
-    confidenceScore:      (j['confidenceScore']     as num?)?.toDouble(),
-    isAvailable:          j['isAvailable']          ?? false,
+    timeSlot:             j['timeSlot'] ?? j['time_slot'] ?? '',
+    predictedPercentage:  ((j['predictedPercentage'] ??
+            j['predicted_percentage']) as num?)?.toDouble() ?? 0,
+    predictedCategory:    j['predictedCategory'] ??
+            j['predicted_category'] ?? 'unknown',
+    confidenceScore:      ((j['confidenceScore'] ??
+            j['confidence_score']) as num?)?.toDouble(),
+    isAvailable:          j['isAvailable'] ?? j['is_available'] ?? false,
+    message:              j['message'],
   );
 }
 

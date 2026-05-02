@@ -1,19 +1,13 @@
 package com.ridepulse.backend.config;
 
 // ============================================================
-// CustomUserDetailsService.java — FINAL FIXED VERSION
+// CustomUserDetailsService.java — UPDATED
 //
-// FIX: Changed .orElseThrow() → .orElse(null) for driver/conductor
-// staffId lookup. Previously this threw UsernameNotFoundException
-// when the staff record wasn't found, which caused Spring Security
-// to reject login with 401 before the JWT was even issued.
+// This service is now called ONLY at login (by AuthenticationManager)
+// and NOT on every request (JwtAuthFilter now uses claims directly).
 //
-// With orElse(null), login succeeds and the driver gets a JWT.
-// If staffId is null, the controller will give a meaningful error.
-//
-// OOP Encapsulation: DB resolution hidden here — callers only
-//     see the UserDetails contract.
-// OOP Polymorphism: role drives which secondary ID is resolved.
+// The orElseThrow → orElse(null) fix is still applied here so that
+// login itself doesn't fail if the staff record is temporarily missing.
 // ============================================================
 
 import com.ridepulse.backend.entity.User;
@@ -43,13 +37,10 @@ public class CustomUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String email)
             throws UsernameNotFoundException {
 
-        // Step 1: load base user
         User user = userRepo.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException(
                         "No account: " + email));
 
-        // Step 2: resolve role-specific secondary ID
-        // OOP Polymorphism: branch by role
         Integer ownerId = null;
         Integer staffId = null;
 
@@ -63,15 +54,12 @@ public class CustomUserDetailsService implements UserDetailsService {
                 || user.getRole() == UserRole.conductor) {
 
             // FIX: orElse(null) — login never fails due to missing staff record.
-            // The role is already correct in User.role, so the JWT will carry
-            // ROLE_driver / ROLE_conductor. If staffId is null, the service
-            // layer will throw a meaningful 404, not a silent 401.
             staffId = staffRepo.findByUser_UserId(user.getUserId())
                     .map(s -> s.getStaffId())
                     .orElse(null);
 
             if (staffId == null) {
-                log.warn("Staff profile missing for user: {} role: {}",
+                log.warn("Staff profile missing for: {} ({})",
                         email, user.getRole());
             }
         }

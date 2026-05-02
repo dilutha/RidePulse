@@ -43,16 +43,18 @@ class _State extends ConsumerState<AuthorityOwnersScreen> {
         const Divider(height: 1),
         Expanded(child: async.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error:   (e, _) => Center(child: Text("Error: \$e")),
+          error:   (e, _) => const Center(child: Text("Error: \$e")),
           data: (owners) {
             final f = _search.isEmpty ? owners
                 : owners.where((o) =>
                     o.fullName.toLowerCase().contains(_search) ||
                     o.businessName.toLowerCase().contains(_search) ||
                     o.nicNumber.toLowerCase().contains(_search)).toList();
-            if (f.isEmpty) return const Center(
+            if (f.isEmpty) {
+              return const Center(
                 child: Text("No owners found",
                     style: TextStyle(color: Colors.grey)));
+            }
             return ListView.builder(
               padding: const EdgeInsets.all(14),
               itemCount: f.length,
@@ -100,15 +102,15 @@ class _OwnerCard extends StatelessWidget {
         ]),
       ]),
       const Divider(height: 16),
-      Row(children: [
+      const Row(children: [
         _Stat("Total Buses",  "\${owner.totalBuses}",
-            Icons.directions_bus, const Color(0xFF1E40AF)),
-        const SizedBox(width: 16),
+            Icons.directions_bus, Color(0xFF1E40AF)),
+        SizedBox(width: 16),
         _Stat("Active",       "\${owner.activeBuses}",
-            Icons.check_circle_outline, const Color(0xFF059669)),
-        const SizedBox(width: 16),
+            Icons.check_circle_outline, Color(0xFF059669)),
+        SizedBox(width: 16),
         _Stat("Staff",        "\${owner.totalStaff}",
-            Icons.people_outline, const Color(0xFFB45309)),
+            Icons.people_outline, Color(0xFFB45309)),
       ]),
       const SizedBox(height: 8),
       Row(children: [

@@ -122,11 +122,11 @@ class _RosterCard extends StatelessWidget {
                   style: TextStyle(color: _statusColor,
                       fontSize: 11, fontWeight: FontWeight.w700))),
           const Spacer(),
-          Row(children: [
-            const Icon(Icons.access_time, size: 14, color: Colors.grey),
-            const SizedBox(width: 4),
+          const Row(children: [
+            Icon(Icons.access_time, size: 14, color: Colors.grey),
+            SizedBox(width: 4),
             Text('\${roster.shiftStart} – \${roster.shiftEnd}',
-                style: const TextStyle(color: Colors.grey, fontSize: 13)),
+                style: TextStyle(color: Colors.grey, fontSize: 13)),
           ]),
         ]),
         const SizedBox(height: 12),
@@ -150,12 +150,12 @@ class _RosterCard extends StatelessWidget {
         ]),
         const Divider(height: 20),
         // Route info
-        Row(children: [
-          const Icon(Icons.route, size: 16, color: Color(0xFF3B82F6)),
-          const SizedBox(width: 6),
+        const Row(children: [
+          Icon(Icons.route, size: 16, color: Color(0xFF3B82F6)),
+          SizedBox(width: 6),
           Expanded(child: Text(
               '\${roster.routeNumber} — \${roster.routeName}',
-              style: const TextStyle(fontWeight: FontWeight.w600))),
+              style: TextStyle(fontWeight: FontWeight.w600))),
         ]),
         const SizedBox(height: 6),
         Row(children: [

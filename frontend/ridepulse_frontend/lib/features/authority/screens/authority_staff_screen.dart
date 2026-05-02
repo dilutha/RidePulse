@@ -82,7 +82,7 @@ class _StaffList extends ConsumerWidget {
     final async = ref.watch(provider);
     return async.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error:   (e, _) => Center(child: Text("Error: \$e")),
+      error:   (e, _) => const Center(child: Text("Error: \$e")),
       data: (list) {
         final filtered = search.isEmpty ? list
             : list.where((s) =>
@@ -92,9 +92,11 @@ class _StaffList extends ConsumerWidget {
                 (s.ownerName?.toLowerCase().contains(search) ?? false))
             .toList();
 
-        if (filtered.isEmpty) return const Center(
+        if (filtered.isEmpty) {
+          return const Center(
             child: Text("No staff found",
                 style: TextStyle(color: Colors.grey)));
+        }
 
         return ListView.builder(
           padding: const EdgeInsets.all(14),

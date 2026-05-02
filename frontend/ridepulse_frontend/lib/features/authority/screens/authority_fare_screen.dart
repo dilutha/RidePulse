@@ -62,15 +62,17 @@ class _State extends ConsumerState<AuthorityFareScreen> {
         const Divider(height: 1),
         Expanded(child: async.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error:   (e, _) => Center(child: Text("Error: \$e")),
+          error:   (e, _) => const Center(child: Text("Error: \$e")),
           data: (fares) {
             final f = _search.isEmpty ? fares
                 : fares.where((r) =>
                     r.routeNumber.toLowerCase().contains(_search) ||
                     r.routeName.toLowerCase().contains(_search)).toList();
-            if (f.isEmpty) return const Center(
+            if (f.isEmpty) {
+              return const Center(
                 child: Text("No routes found",
                     style: TextStyle(color: Colors.grey)));
+            }
             return ListView.builder(
               padding: const EdgeInsets.all(14),
               itemCount: f.length,
@@ -131,12 +133,12 @@ class _FareCard extends StatelessWidget {
               style: TextStyle(
                   color: Colors.grey.shade500, fontSize: 11)),
         ])),
-        Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+        const Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
           Text("LKR \${fare.currentBaseFare.toStringAsFixed(2)}",
-              style: const TextStyle(
+              style: TextStyle(
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF059669), fontSize: 16)),
-          const Text("base fare",
+          Text("base fare",
               style: TextStyle(color: Colors.grey, fontSize: 10)),
         ]),
       ]),
@@ -150,12 +152,12 @@ class _FareCard extends StatelessWidget {
             decoration: BoxDecoration(
                 color: const Color(0xFFF0FDF4),
                 borderRadius: BorderRadius.circular(6)),
-            child: Column(children: [
+            child: const Column(children: [
               Text("\${p.stopCount}s",
-                  style: const TextStyle(
+                  style: TextStyle(
                       color: Colors.grey, fontSize: 9)),
               Text("\${p.fare.toStringAsFixed(0)}",
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF059669),
                       fontSize: 12)),
@@ -199,7 +201,7 @@ class _EditState extends ConsumerState<_EditFareDialog> {
   Widget build(BuildContext context) {
     final f = widget.fare;
     return AlertDialog(
-      title: Text("Set Fare — \${f.routeNumber}"),
+      title: const Text("Set Fare — \${f.routeNumber}"),
       content: SizedBox(width: 460, child: Column(
           mainAxisSize: MainAxisSize.min, children: [
         Text(f.routeName, style: TextStyle(
@@ -225,12 +227,12 @@ class _EditState extends ConsumerState<_EditFareDialog> {
           decoration: BoxDecoration(
               color: const Color(0xFF059669).withOpacity(0.07),
               borderRadius: BorderRadius.circular(12)),
-          child: Row(
+          child: const Row(
               mainAxisAlignment: MainAxisAlignment.center, children: [
-            const Text("Base Fare: ",
+            Text("Base Fare: ",
                 style: TextStyle(fontSize: 14)),
             Text("LKR \${_previewFare.toStringAsFixed(2)}",
-                style: const TextStyle(
+                style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF059669), fontSize: 20)),
           ])),
@@ -250,11 +252,11 @@ class _EditState extends ConsumerState<_EditFareDialog> {
               double fare = _previewFare + (stops - 1) * f.farePerStop;
               fare = fare.clamp(f.minimumFare, f.maximumFare);
               return Expanded(child: Column(children: [
-                Text("\$stops stop\${stops == 1 ? "" : "s"}",
+                Text('$stops stop${stops == 1 ? "" : "s"}',
                     style: TextStyle(
                         color: Colors.grey.shade600, fontSize: 10)),
-                Text("\${fare.toStringAsFixed(0)}",
-                    style: const TextStyle(
+                const Text("\${fare.toStringAsFixed(0)}",
+                    style: TextStyle(
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF059669), fontSize: 12)),
               ]));

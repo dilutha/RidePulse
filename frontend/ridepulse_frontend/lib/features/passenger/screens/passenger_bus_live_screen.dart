@@ -61,7 +61,7 @@ class _Body extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final defaultCenter = const LatLng(6.9271, 79.8612);
+    const defaultCenter = LatLng(6.9271, 79.8612);
     final busCenter     = bus.hasLocation
         ? LatLng(bus.latitude!, bus.longitude!)
         : defaultCenter;
@@ -164,18 +164,18 @@ class _Body extends StatelessWidget {
               // Alert banners
               if (!bus.hasLocation) ...[
                 const SizedBox(height: 12),
-                _AlertBanner(
+                const _AlertBanner(
                   icon: Icons.gps_not_fixed_rounded,
                   message: 'GPS location not available for this bus',
-                  color: const Color(0xFFFB923C),
+                  color: Color(0xFFFB923C),
                 ),
               ],
               if (!bus.isOnTrip) ...[
                 const SizedBox(height: 10),
-                _AlertBanner(
+                const _AlertBanner(
                   icon: Icons.info_outline_rounded,
                   message: 'This bus is not currently on a trip',
-                  color: const Color(0xFF94A3B8),
+                  color: Color(0xFF94A3B8),
                 ),
               ],
             ]),
@@ -595,12 +595,12 @@ class _ErrorState extends StatelessWidget {
                   ),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Row(mainAxisSize: MainAxisSize.min,
+                child: const Row(mainAxisSize: MainAxisSize.min,
                     children: [
-                  const Icon(Icons.refresh_rounded,
+                  Icon(Icons.refresh_rounded,
                       size: 16, color: Colors.white),
-                  const SizedBox(width: 8),
-                  const Text('Retry',
+                  SizedBox(width: 8),
+                  Text('Retry',
                       style: TextStyle(
                           color: Colors.white,
                           fontSize: 14,

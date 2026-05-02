@@ -1,8 +1,15 @@
 package com.ridepulse.backend.config;
 
-// OOP Encapsulation — all token generation and validation logic is private.
-//     The rest of the system only calls generateToken(), isTokenValid(),
-//     extractEmail(), extractRole(). The crypto details never leak out.
+// ============================================================
+// JwtService.java — UPDATED
+//
+// ADDED: extractOwnerId(), extractStaffId(), extractUserId(),
+//        extractFullName() so JwtAuthFilter can build
+//        CustomUserDetails directly from claims with no DB hit.
+//
+// OOP Encapsulation: all token crypto is private.
+//     Callers only use the public extract* methods.
+// ============================================================
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -14,6 +21,7 @@ import javax.crypto.SecretKey;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 public class JwtService {
@@ -24,32 +32,32 @@ public class JwtService {
     @Value("${app.jwt.expiration-ms}")
     private long jwtExpirationMs;
 
-    // Encapsulation: key construction is private — callers never touch the key
     private SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(jwtSecret.getBytes());
     }
 
     /**
-     * Generates a signed JWT for the given principal.
-     * OOP Polymorphism: role, ownerId, staffId are embedded so every role
-     * carries exactly the claims it needs — no extra DB calls downstream.
+     * Generates a JWT embedding all fields needed to rebuild the principal
+     * on subsequent requests — without touching the database.
      */
     public String generateToken(CustomUserDetails userDetails) {
-        Map<String, Object> extraClaims = new HashMap<>();
-        extraClaims.put("role",    userDetails.getRole());
-        extraClaims.put("userId",  userDetails.getUserId().toString());
-        extraClaims.put("ownerId", userDetails.getOwnerId());   // null for non-owners
-        extraClaims.put("staffId", userDetails.getStaffId());   // null for non-staff
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("role",     userDetails.getRole());
+        claims.put("userId",   userDetails.getUserId().toString());
+        claims.put("fullName", userDetails.getFullName());
+        claims.put("ownerId",  userDetails.getOwnerId());  // null for non-owners
+        claims.put("staffId",  userDetails.getStaffId());  // null for non-staff
 
-        // JJWT 0.12+ new fluent API — replaces all deprecated set*() methods
         return Jwts.builder()
-                .claims(extraClaims)                                          // replaces setClaims()
-                .subject(userDetails.getUsername())                           // replaces setSubject()
-                .issuedAt(new Date())                                         // replaces setIssuedAt()
-                .expiration(new Date(System.currentTimeMillis() + jwtExpirationMs)) // replaces setExpiration()
-                .signWith(getSigningKey())                                    // replaces signWith(key, algorithm)
+                .claims(claims)
+                .subject(userDetails.getUsername())        // email
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
+                .signWith(getSigningKey())
                 .compact();
     }
+
+    // ── Claim extractors (Encapsulation: parsing is private) ─────────────
 
     public String extractEmail(String token) {
         return extractAllClaims(token).getSubject();
@@ -59,22 +67,48 @@ public class JwtService {
         return extractAllClaims(token).get("role", String.class);
     }
 
+    public String extractFullName(String token) {
+        return extractAllClaims(token).get("fullName", String.class);
+    }
+
+    public UUID extractUserId(String token) {
+        String raw = extractAllClaims(token).get("userId", String.class);
+        return raw != null ? UUID.fromString(raw) : null;
+    }
+
+    public Integer extractOwnerId(String token) {
+        Object raw = extractAllClaims(token).get("ownerId");
+        if (raw == null) return null;
+        return raw instanceof Integer ? (Integer) raw : ((Number) raw).intValue();
+    }
+
+    public Integer extractStaffId(String token) {
+        Object raw = extractAllClaims(token).get("staffId");
+        if (raw == null) return null;
+        return raw instanceof Integer ? (Integer) raw : ((Number) raw).intValue();
+    }
+
+    public boolean isTokenValid(String token, String email) {
+        final String tokenEmail = extractEmail(token);
+        return tokenEmail != null
+                && tokenEmail.equals(email)
+                && !isTokenExpired(token);
+    }
+
+    // Keep backward-compatible overload for any callers passing CustomUserDetails
     public boolean isTokenValid(String token, CustomUserDetails userDetails) {
-        final String email = extractEmail(token);
-        return email.equals(userDetails.getUsername()) && !isTokenExpired(token);
+        return isTokenValid(token, userDetails.getUsername());
     }
 
     private boolean isTokenExpired(String token) {
         return extractAllClaims(token).getExpiration().before(new Date());
     }
 
-    // Encapsulation: parsing detail is private — callers never parse themselves
     private Claims extractAllClaims(String token) {
-        // JJWT 0.12+ replaces parserBuilder() with parser()
         return Jwts.parser()
-                .verifyWith(getSigningKey())          // replaces setSigningKey()
+                .verifyWith(getSigningKey())
                 .build()
-                .parseSignedClaims(token)             // replaces parseClaimsJws()
-                .getPayload();                        // replaces getBody()
+                .parseSignedClaims(token)
+                .getPayload();
     }
 }

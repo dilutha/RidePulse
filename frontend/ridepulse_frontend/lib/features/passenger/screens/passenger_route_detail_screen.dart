@@ -181,8 +181,8 @@ class _BusCard extends StatelessWidget {
             const SizedBox(width: 12),
             Column(crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-              Text('Capacity: \${bus.passengerCount}/\${bus.capacity}',
-                  style: const TextStyle(fontSize: 13)),
+              const Text('Capacity: \${bus.passengerCount}/\${bus.capacity}',
+                  style: TextStyle(fontSize: 13)),
               Text('Updated \${bus.lastUpdated}',
                   style: TextStyle(
                       color: Colors.grey.shade500, fontSize: 11)),
@@ -222,8 +222,8 @@ class _BusCard extends StatelessWidget {
                     fontWeight: FontWeight.w600, fontSize: 12)),
             const Spacer(),
             if (bus.speedKmh != null)
-              Text('\${bus.speedKmh!.toStringAsFixed(0)} km/h',
-                  style: const TextStyle(
+              const Text('\${bus.speedKmh!.toStringAsFixed(0)} km/h',
+                  style: TextStyle(
                       color: Colors.grey, fontSize: 12)),
             const SizedBox(width: 8),
             const Text('Tap for live map →',

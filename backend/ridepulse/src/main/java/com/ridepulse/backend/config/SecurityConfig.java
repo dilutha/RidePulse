@@ -82,8 +82,12 @@ public class SecurityConfig {
                                 "/api/v1/passenger/routes",
                                 "/api/v1/passenger/routes/**",
                                 "/api/v1/passenger/buses/**",
+                                "/api/v1/passenger/predictions/**",
                                 "/api/v1/routes",
                                 "/api/v1/routes/**"
+                        ).permitAll()
+                        .requestMatchers(HttpMethod.POST,
+                                "/api/v1/passenger/routes/*/predictions/single"
                         ).permitAll()
 
                         // Everything else requires a valid JWT

@@ -43,9 +43,11 @@ class _DriverEmergencyScreenState
       );
       ref.invalidate(driverDashboardProvider);
       ref.invalidate(driverAlertsProvider);
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Emergency alert sent to authority"),
               backgroundColor: Colors.red));
+      }
     } catch (e) {
       setState(() => _error = e.toString().replaceFirst("Exception: ", ""));
     } finally { setState(() => _loading = false); }
@@ -96,7 +98,7 @@ class _DriverEmergencyScreenState
           // Raise new alert — only if trip active and no active alert
           dashAsync.when(
             loading: () => const CircularProgressIndicator(),
-            error:   (e, _) => Text("Error: \$e"),
+            error:   (e, _) => const Text("Error: \$e"),
             data: (dash) {
               if (dash.activeAlert != null) {
                 return Padding(
@@ -151,7 +153,7 @@ class _DriverEmergencyScreenState
           const SizedBox(height: 10),
           alertsAsync.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error:   (e, _) => Text("Error: \$e"),
+            error:   (e, _) => const Text("Error: \$e"),
             data: (alerts) => alerts.isEmpty
                 ? const Center(child: Text("No alerts raised",
                     style: TextStyle(color: Colors.grey)))
@@ -192,8 +194,8 @@ class _ActiveAlertCard extends StatelessWidget {
         Text(alert.description!, style: const TextStyle(color: Colors.white70)),
       ],
       const SizedBox(height: 4),
-      Text("Bus: \${alert.busNumber}  ·  Raised: \${alert.createdAt}",
-          style: const TextStyle(color: Colors.white70, fontSize: 12)),
+      const Text("Bus: \${alert.busNumber}  ·  Raised: \${alert.createdAt}",
+          style: TextStyle(color: Colors.white70, fontSize: 12)),
       const SizedBox(height: 12),
       SizedBox(
         width: double.infinity,
@@ -291,7 +293,7 @@ class _AlertHistoryRow extends StatelessWidget {
       leading: Icon(Icons.warning_amber_rounded, color: _c),
       title: Text(a.alertType.toUpperCase(),
           style: const TextStyle(fontWeight: FontWeight.w600)),
-      subtitle: Text("\${a.busNumber}  ·  \${a.createdAt}"),
+      subtitle: const Text("\${a.busNumber}  ·  \${a.createdAt}"),
       trailing: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
         decoration: BoxDecoration(

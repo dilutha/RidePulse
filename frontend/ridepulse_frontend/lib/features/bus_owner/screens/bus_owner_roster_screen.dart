@@ -9,7 +9,7 @@ import "package:flutter_riverpod/flutter_riverpod.dart";
 import "package:go_router/go_router.dart";
 import "../../../core/services/api_service.dart";
 import "../../../core/models/bus_models.dart";
-import "../../../core/models/roster_models.dart";
+import "../../../core/models/conductor_models.dart";
 
 // ── Providers ─────────────────────────────────────────────────
 
@@ -74,7 +74,7 @@ class _BusOwnerRosterScreenState
           data: (drivers) => staffC.maybeWhen(
             data: (conductors) => FloatingActionButton.extended(
               onPressed: () => _showCreateDialog(
-                  context, buses, [...drivers, ...conductors], params),
+                  context, buses, drivers, conductors, params),
               icon: const Icon(Icons.add),
               label: const Text('Add Roster'),
               backgroundColor: const Color(0xFF1A56DB)),
@@ -137,11 +137,12 @@ class _BusOwnerRosterScreenState
   }
 
   void _showCreateDialog(BuildContext ctx, List<BusModel> buses,
-      List<StaffModel> staff, dynamic params) {
+      List<StaffModel> drivers, List<StaffModel> conductors, dynamic params) {
     showDialog(context: ctx, barrierDismissible: false,
         builder: (_) => _CreateRosterDialog(
             buses: buses.where((b) => b.isActive).toList(),
-            staff: staff,
+            drivers: drivers.where((s) => s.isActive).toList(),
+            conductors: conductors.where((s) => s.isActive).toList(),
             initialDate: _weekStart,
             onSaved: () => ref.invalidate(
                 _rosterRangeProvider(params))));
@@ -268,10 +269,12 @@ class _RosterCard extends StatelessWidget {
 
 class _CreateRosterDialog extends ConsumerStatefulWidget {
   final List<BusModel>   buses;
-  final List<StaffModel> staff;
+  final List<StaffModel> drivers;
+  final List<StaffModel> conductors;
   final DateTime         initialDate;
   final VoidCallback     onSaved;
-  const _CreateRosterDialog({required this.buses, required this.staff,
+  const _CreateRosterDialog({required this.buses, required this.drivers,
+      required this.conductors,
       required this.initialDate, required this.onSaved});
   @override
   ConsumerState<_CreateRosterDialog> createState() =>
@@ -280,7 +283,8 @@ class _CreateRosterDialog extends ConsumerStatefulWidget {
 
 class _CreateRosterDialogState
     extends ConsumerState<_CreateRosterDialog> {
-  StaffModel? _staff;
+  StaffModel? _driver;
+  StaffModel? _conductor;
   BusModel?   _bus;
   DateTime    _date   = DateTime.now();
   TimeOfDay   _start  = const TimeOfDay(hour: 6, minute: 0);
@@ -306,20 +310,35 @@ class _CreateRosterDialogState
     title: const Text('Add Duty Roster'),
     content: SizedBox(width: 480, child: SingleChildScrollView(
       child: Column(mainAxisSize: MainAxisSize.min, children: [
-        // Staff dropdown
         DropdownButtonFormField<StaffModel>(
-          value: _staff, isExpanded: true,
-          hint: const Text('Select staff member'),
+          value: _driver, isExpanded: true,
+          hint: const Text('Select driver'),
           decoration: const InputDecoration(
-              labelText: 'Staff *',
-              prefixIcon: Icon(Icons.person, size: 20),
+              labelText: 'Driver *',
+              prefixIcon: Icon(Icons.drive_eta, size: 20),
               border: OutlineInputBorder()),
-          items: widget.staff.map((s) => DropdownMenuItem(
+          items: widget.drivers.map((s) => DropdownMenuItem(
             value: s,
             child: Text(
-              '${s.staffType.toUpperCase()} — ${s.fullName}',
+              '${s.employeeId} — ${s.fullName}',
               overflow: TextOverflow.ellipsis))).toList(),
-          onChanged: (s) => setState(() => _staff = s),
+          onChanged: (s) => setState(() => _driver = s),
+        ),
+        const SizedBox(height: 14),
+
+        DropdownButtonFormField<StaffModel>(
+          value: _conductor, isExpanded: true,
+          hint: const Text('Select conductor'),
+          decoration: const InputDecoration(
+              labelText: 'Conductor *',
+              prefixIcon: Icon(Icons.confirmation_number, size: 20),
+              border: OutlineInputBorder()),
+          items: widget.conductors.map((s) => DropdownMenuItem(
+            value: s,
+            child: Text(
+              '${s.employeeId} — ${s.fullName}',
+              overflow: TextOverflow.ellipsis))).toList(),
+          onChanged: (s) => setState(() => _conductor = s),
         ),
         const SizedBox(height: 14),
 
@@ -409,14 +428,15 @@ class _CreateRosterDialogState
           onPressed: () => Navigator.pop(context),
           child: const Text('Cancel')),
       ElevatedButton(
-        onPressed: (_staff == null || _bus == null || _loading)
+        onPressed: (_driver == null || _conductor == null ||
+                _bus == null || _loading)
             ? null
             : _submit,
         child: _loading
             ? const SizedBox(width: 16, height: 16,
                 child: CircularProgressIndicator(
                     color: Colors.white, strokeWidth: 2))
-            : const Text('Create Roster',
+            : const Text('Create Duty',
                 style: TextStyle(color: Colors.white))),
     ],
   );
@@ -424,13 +444,15 @@ class _CreateRosterDialogState
   Future<void> _submit() async {
     setState(() { _loading = true; _error = null; });
     try {
-      await ref.read(apiServiceProvider).createRoster(
-        staffId:    _staff!.staffId,
-        busId:      _bus!.busId,
-        dutyDate:   _fmtDate(_date),
-        shiftStart: _fmtTime(_start),
-        shiftEnd:   _fmtTime(_end),
-      );
+      for (final staff in [_driver!, _conductor!]) {
+        await ref.read(apiServiceProvider).createRoster(
+          staffId:    staff.staffId,
+          busId:      _bus!.busId,
+          dutyDate:   _fmtDate(_date),
+          shiftStart: _fmtTime(_start),
+          shiftEnd:   _fmtTime(_end),
+        );
+      }
       if (mounted) {
         Navigator.pop(context);
         widget.onSaved();

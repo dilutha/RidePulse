@@ -50,11 +50,18 @@ import '../../features/bus_owner/screens/revenue_screen.dart';
 import '../../features/bus_owner/screens/welfare_screen.dart';
 import '../../features/bus_owner/screens/live_map_screen.dart';
 import '../../features/bus_owner/screens/bus_owner_complaints_screen.dart';
+import '../../features/bus_owner/screens/bus_owner_roster_screen.dart';
 
 // Authority
 import '../../features/authority/screens/authority_dashboard_screen.dart';
 import '../../features/authority/screens/authority_complaint_list_screen.dart';
 import '../../features/authority/screens/authority_complaint_detail_screen.dart';
+import '../../features/authority/screens/authority_buses_screen.dart';
+import '../../features/authority/screens/authority_staff_screen.dart';
+import '../../features/authority/screens/authority_owners_screen.dart';
+import '../../features/authority/screens/authority_fare_screen.dart';
+import '../../features/authority/screens/authority_roster_screen.dart';
+import '../../features/authority/screens/authority_route_optimization_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -168,6 +175,8 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(path: '/bus-owner/staff/:id',
               builder: (context, state) => StaffProfileScreen(
                   staffId: int.parse(state.pathParameters['id']!))),
+          GoRoute(path: '/bus-owner/roster',
+              builder: (context, state) => const BusOwnerRosterScreen()),
           GoRoute(path: '/bus-owner/revenue',
               builder: (context, state) => const RevenueScreen()),
           GoRoute(path: '/bus-owner/welfare',
@@ -190,6 +199,19 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(path: '/authority/complaints/:id',
               builder: (context, state) => AuthorityComplaintDetailScreen(
                   complaintId: int.parse(state.pathParameters['id']!))),
+          GoRoute(path: '/authority/buses',
+              builder: (context, state) => const AuthorityBusesScreen()),
+          GoRoute(path: '/authority/staff',
+              builder: (context, state) => const AuthorityStaffScreen()),
+          GoRoute(path: '/authority/owners',
+              builder: (context, state) => const AuthorityOwnersScreen()),
+          GoRoute(path: '/authority/fares',
+              builder: (context, state) => const AuthorityFareScreen()),
+          GoRoute(path: '/authority/roster',
+              builder: (context, state) => const AuthorityRosterScreen()),
+          GoRoute(path: '/authority/route-optimization',
+              builder: (context, state) =>
+                  const AuthorityRouteOptimizationScreen()),
         ],
       ),
     ],

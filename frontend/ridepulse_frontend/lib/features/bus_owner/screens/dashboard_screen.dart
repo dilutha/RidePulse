@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/services/api_service.dart';
+import '../../../core/models/bus_models.dart';
 
 class BusOwnerDashboardScreen extends ConsumerStatefulWidget {
   const BusOwnerDashboardScreen({super.key});
@@ -20,6 +21,10 @@ class _BusOwnerDashboardScreenState
   @override
   void initState() {
     super.initState();
+     Future.microtask(() {
+    ref.invalidate(busListProvider);
+     });
+    
     _fadeCtrl = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 600));
     _fadeAnim  = CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeOut);
@@ -132,13 +137,15 @@ class _DarkAppBar extends StatelessWidget {
 // ── Main dashboard body ───────────────────────────────────────
 
 class _DashBody extends StatelessWidget {
-  final List<dynamic> buses;
+  final List<BusModel> buses;
   const _DashBody({required this.buses});
 
   @override
   Widget build(BuildContext context) {
-    final totalBuses  = buses.length;
-    final activeBuses = buses.where((b) => b.isActive).length;
+    final totalBuses = buses.length;
+
+    final activeBuses =
+      buses.where((b) => b.isActive == true).length;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 22, 20, 40),
@@ -165,7 +172,7 @@ class _DashBody extends StatelessWidget {
         const SizedBox(height: 26),
 
         // ── Quick actions ──────────────────────────────
-        _SectionLabel('Quick Actions'),
+        const _SectionLabel('Quick Actions'),
         const SizedBox(height: 12),
         Row(children: [
           _ActionBtn(
@@ -192,7 +199,7 @@ class _DashBody extends StatelessWidget {
 
         // ── Fleet list ─────────────────────────────────
         Row(children: [
-          _SectionLabel('Your Fleet'),
+          const _SectionLabel('Your Fleet'),
           const SizedBox(width: 10),
           Container(
             padding: const EdgeInsets.symmetric(

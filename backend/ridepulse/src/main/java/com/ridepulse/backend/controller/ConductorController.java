@@ -9,6 +9,10 @@ package com.ridepulse.backend.controller;
 
 import com.ridepulse.backend.config.CustomUserDetails;
 import com.ridepulse.backend.dto.*;
+import com.ridepulse.backend.entity.BusTrip;
+import com.ridepulse.backend.entity.GpsTracking;
+import com.ridepulse.backend.repository.BusTripRepository;
+import com.ridepulse.backend.repository.GpsTrackingRepository;
 import com.ridepulse.backend.service.ConductorService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +21,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -27,6 +33,8 @@ public class ConductorController {
 
     // Abstraction: depends on interface only
     private final ConductorService conductorService;
+    private final BusTripRepository tripRepo;
+    private final GpsTrackingRepository gpsRepo;
 
     // ── Dashboard ─────────────────────────────────────────────
 
@@ -174,6 +182,29 @@ public class ConductorController {
                 conductorService.updateCrowdLevel(request, user.getStaffId()));
     }
 
+    /**
+     * POST /api/v1/conductor/gps/update
+     * Body: { tripId, latitude, longitude, speedKmh?, heading? }
+     * Lets the conductor app publish bus location when the conductor starts
+     * the route, so passengers and owners can see the live bus position.
+     */
+    @PostMapping("/gps/update")
+    @PreAuthorize("hasRole('conductor')")
+    public ResponseEntity<Void> updateGps(@RequestBody Map<String, Object> body) {
+        BusTrip trip = tripRepo.findById(((Number) body.get("tripId")).intValue())
+                .orElseThrow(() -> new RuntimeException("Trip not found"));
+        gpsRepo.save(GpsTracking.builder()
+                .bus(trip.getBus())
+                .trip(trip)
+                .latitude(BigDecimal.valueOf(((Number) body.get("latitude")).doubleValue()))
+                .longitude(BigDecimal.valueOf(((Number) body.get("longitude")).doubleValue()))
+                .speedKmh(numberOrNull(body.get("speedKmh")))
+                .heading(numberOrNull(body.get("heading")))
+                .recordedAt(LocalDateTime.now())
+                .build());
+        return ResponseEntity.noContent().build();
+    }
+
     // ── Route Stops ───────────────────────────────────────────
 
     /**
@@ -200,5 +231,11 @@ public class ConductorController {
             @AuthenticationPrincipal CustomUserDetails user) {
         return ResponseEntity.ok(
                 conductorService.getWelfareHistory(user.getStaffId()));
+    }
+
+    private BigDecimal numberOrNull(Object value) {
+        return value instanceof Number n
+                ? BigDecimal.valueOf(n.doubleValue())
+                : null;
     }
 }

@@ -796,7 +796,9 @@ class _SectionLabel extends StatelessWidget {
   const _SectionLabel(this.text);
 
   @override
-  Widget build(BuildContext context) => Row(children: [
+  Widget build(BuildContext context) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
     Text(text.toUpperCase(),
         style: TextStyle(
             fontSize: 10,
@@ -804,8 +806,11 @@ class _SectionLabel extends StatelessWidget {
             letterSpacing: 1.0,
             color: Colors.white.withOpacity(0.3))),
     const SizedBox(width: 10),
-    Expanded(child: Divider(
-        color: Colors.white.withOpacity(0.08), height: 1)),
+    SizedBox(
+      width: 44,
+      child: Divider(
+          color: Colors.white.withOpacity(0.08), height: 1),
+    ),
   ]);
 }
 

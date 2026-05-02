@@ -95,7 +95,7 @@ class _WelfareScreenState extends ConsumerState<WelfareScreen>
                   const SizedBox(height: 20),
 
                   // Staff welfare list
-                  _SectionLabel('Staff Welfare'),
+                  const _SectionLabel('Staff Welfare'),
                   const SizedBox(height: 12),
 
                   async.when(

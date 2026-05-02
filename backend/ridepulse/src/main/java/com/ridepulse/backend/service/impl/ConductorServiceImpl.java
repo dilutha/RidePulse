@@ -225,14 +225,14 @@ public class ConductorServiceImpl implements ConductorService {
                 .orElseThrow(() -> new RuntimeException("Boarding stop not found"));
         RouteStop alighting = stopRepo.findById(req.getAlightingStopId())
                 .orElseThrow(() -> new RuntimeException("Alighting stop not found"));
+        if (!boarding.getRoute().getRouteId().equals(trip.getRoute().getRouteId())
+                || !alighting.getRoute().getRouteId().equals(trip.getRoute().getRouteId())) {
+            throw new RuntimeException("Selected stops do not belong to this route");
+        }
 
         // Polymorphism: fare calculated by stop sequence distance
         BigDecimal fare = calculateFare(
                 trip.getRoute(), boarding, alighting);
-
-        // Encapsulation: unique identifiers generated privately
-        String ticketNumber = generateTicketNumber();
-        String qrCode       = generateQrCode(ticketNumber);
 
         // Resolve optional passenger
         User passenger = null;
@@ -241,23 +241,37 @@ public class ConductorServiceImpl implements ConductorService {
                     .orElse(null);
         }
 
-        Ticket ticket = Ticket.builder()
-                .ticketNumber(ticketNumber)
-                .qrCode(qrCode)
-                .trip(trip)
-                .passenger(passenger)
-                .conductor(conductor)
-                .route(trip.getRoute())
-                .boardingStop(boarding)
-                .alightingStop(alighting)
-                .fareAmount(fare)
-                .paymentMethod(req.getPaymentMethod() != null ? req.getPaymentMethod() : "cash")
-                .ticketStatus("active")
-                .issuedAt(LocalDateTime.now())
-                .build();
+        int ticketCount = req.getTicketCount() != null ? req.getTicketCount() : 1;
+        Ticket ticket = null;
+        for (int i = 0; i < ticketCount; i++) {
+            String ticketNumber = generateTicketNumber();
+            String qrCode       = generateQrCode(ticketNumber);
 
-        ticketRepo.save(ticket);
-        log.info("Ticket issued: {} fare={} trip={}", ticketNumber, fare, trip.getTripId());
+            ticket = Ticket.builder()
+                    .ticketNumber(ticketNumber)
+                    .qrCode(qrCode)
+                    .trip(trip)
+                    .passenger(passenger)
+                    .conductor(conductor)
+                    .route(trip.getRoute())
+                    .boardingStop(boarding)
+                    .alightingStop(alighting)
+                    .fareAmount(fare)
+                    .paymentMethod(req.getPaymentMethod() != null ? req.getPaymentMethod() : "cash")
+                    .ticketStatus("active")
+                    .issuedAt(LocalDateTime.now())
+                    .build();
+
+            ticketRepo.save(ticket);
+        }
+        int livePassengerCount = ticketRepo.countByTrip_TripId(trip.getTripId());
+        crowdRepo.save(CrowdLevel.builder()
+                .bus(trip.getBus())
+                .trip(trip)
+                .passengerCount(livePassengerCount)
+                .busCapacity(trip.getBus().getCapacity())
+                .build());
+        log.info("Tickets issued: count={} fareEach={} trip={}", ticketCount, fare, trip.getTripId());
 
         return toTicketDTO(ticket);
     }
@@ -382,10 +396,14 @@ public class ConductorServiceImpl implements ConductorService {
 
 
     private String generateTicketNumber() {
-        String date = LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE);
-        // Encapsulation: unique suffix from timestamp
-        String suffix = String.format("%05d", System.currentTimeMillis() % 100000);
-        return "TKT-" + date + "-" + suffix;
+        String ticketNumber;
+        do {
+            String date = LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE);
+            String suffix = String.format("%05d", System.currentTimeMillis() % 100000);
+            String nonce = UUID.randomUUID().toString().substring(0, 4).toUpperCase();
+            ticketNumber = "TKT-" + date + "-" + suffix + "-" + nonce;
+        } while (ticketRepo.existsByTicketNumber(ticketNumber));
+        return ticketNumber;
     }
 
     private String generateQrCode(String ticketNumber) {

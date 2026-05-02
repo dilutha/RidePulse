@@ -60,7 +60,7 @@ class _StaffListScreenState extends ConsumerState<StaffListScreen>
         Expanded(
           child: TabBarView(
             controller: _tab,
-            children: [
+            children: const [
               _StaffTab(staffType: 'driver'),
               _StaffTab(staffType: 'conductor'),
             ],
@@ -450,7 +450,7 @@ class _DarkSwitch extends StatelessWidget {
     child: Switch(
       value:      value,
       onChanged:  onChanged,
-      activeColor: color,
+      activeThumbColor: color,
       activeTrackColor: color.withOpacity(0.25),
       inactiveThumbColor: Colors.white.withOpacity(0.3),
       inactiveTrackColor: Colors.white.withOpacity(0.08),
@@ -664,7 +664,7 @@ class _DarkDropdown<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) =>
       DropdownButtonFormField<T>(
-        value: value,
+        initialValue: value,
         isExpanded: true,
         dropdownColor: const Color(0xFF1A2540),
         style:

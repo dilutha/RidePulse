@@ -324,11 +324,11 @@ class _ComingSoon extends StatelessWidget {
                     fontWeight: FontWeight.w600)),
           ]),
           const SizedBox(height: 14),
-          _FeatureItem(
+          const _FeatureItem(
               'AI-powered crowd predictions by time slot'),
-          _FeatureItem('Best time to board for low crowds'),
-          _FeatureItem('Historical crowd patterns'),
-          _FeatureItem('Confidence score per prediction'),
+          const _FeatureItem('Best time to board for low crowds'),
+          const _FeatureItem('Historical crowd patterns'),
+          const _FeatureItem('Confidence score per prediction'),
         ]),
       ),
 
@@ -344,13 +344,13 @@ class _ComingSoon extends StatelessWidget {
           border: Border.all(
               color: const Color(0xFFFB923C).withOpacity(0.3)),
         ),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          const Icon(Icons.schedule_rounded,
+        child: const Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(Icons.schedule_rounded,
               color: Color(0xFFFB923C), size: 15),
-          const SizedBox(width: 6),
+          SizedBox(width: 6),
           Text('LSTM model training in progress',
               style: TextStyle(
-                  color: const Color(0xFFFB923C),
+                  color: Color(0xFFFB923C),
                   fontWeight: FontWeight.w600,
                   fontSize: 12)),
         ]),

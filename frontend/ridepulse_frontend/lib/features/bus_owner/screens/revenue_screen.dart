@@ -213,7 +213,7 @@ class _RevenueScreenState extends ConsumerState<RevenueScreen>
                   _FormulaCard(),
                   const SizedBox(height: 22),
 
-                  _SectionLabel('Bus Revenue'),
+                  const _SectionLabel('Bus Revenue'),
                   const SizedBox(height: 12),
 
                   revenueAsync.when(
@@ -294,11 +294,11 @@ class _DarkAppBar extends StatelessWidget {
             border: Border.all(
                 color: const Color(0xFFFB923C).withOpacity(0.3)),
           ),
-          child: Row(mainAxisSize: MainAxisSize.min, children: [
-            const Icon(Icons.local_gas_station_rounded,
+          child: const Row(mainAxisSize: MainAxisSize.min, children: [
+            Icon(Icons.local_gas_station_rounded,
                 size: 14, color: Color(0xFFFB923C)),
-            const SizedBox(width: 6),
-            const Text('Fuel',
+            SizedBox(width: 6),
+            Text('Fuel',
                 style: TextStyle(
                     color: Color(0xFFFB923C),
                     fontSize: 12,
@@ -419,21 +419,21 @@ class _FormulaCard extends StatelessWidget {
                 fontWeight: FontWeight.w600)),
       ]),
       const SizedBox(height: 14),
-      _FormulaRow('Gross Revenue', isIncome: true),
-      _FormulaRow('− Fuel Expenses',        isDeduct: true),
-      _FormulaRow('− Maintenance (fixed)',   isDeduct: true),
-      _FormulaRow('− Staff Base Salaries',   isDeduct: true),
+      const _FormulaRow('Gross Revenue', isIncome: true),
+      const _FormulaRow('− Fuel Expenses',        isDeduct: true),
+      const _FormulaRow('− Maintenance (fixed)',   isDeduct: true),
+      const _FormulaRow('− Staff Base Salaries',   isDeduct: true),
       Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),
         child: Divider(height: 1,
             color: Colors.white.withOpacity(0.08)),
       ),
-      _FormulaRow('= Net Profit', isBold: true),
+      const _FormulaRow('= Net Profit', isBold: true),
       const SizedBox(height: 8),
-      _FormulaRow('Driver Welfare  = Net × 3%',
-          color: const Color(0xFF4ADE80)),
-      _FormulaRow('Conductor Welfare = Net × 2%',
-          color: const Color(0xFF4ADE80)),
+      const _FormulaRow('Driver Welfare  = Net × 3%',
+          color: Color(0xFF4ADE80)),
+      const _FormulaRow('Conductor Welfare = Net × 2%',
+          color: Color(0xFF4ADE80)),
     ]),
   );
 }

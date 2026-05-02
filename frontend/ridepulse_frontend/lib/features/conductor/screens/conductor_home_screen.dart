@@ -217,7 +217,7 @@ class _DashboardBody extends StatelessWidget {
       const SizedBox(height: 24),
 
       // ── Quick actions ──────────────────────────────────
-      _SectionLabel('Quick Actions'),
+      const _SectionLabel('Quick Actions'),
       const SizedBox(height: 12),
       GridView.count(
         crossAxisCount: 2,
@@ -266,8 +266,8 @@ class _GreetingRow extends StatelessWidget {
   Widget build(BuildContext context) => Row(children: [
     Container(
       width: 46, height: 46,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
           colors: [Color(0xFFB45309), Color(0xFFFB923C)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -471,14 +471,14 @@ class _TodayDutyCard extends StatelessWidget {
                 border: Border.all(
                     color: Colors.white.withOpacity(0.25)),
               ),
-              child: Row(
+              child: const Row(
                   mainAxisAlignment:
                       MainAxisAlignment.center,
                   children: [
-                const Icon(Icons.open_in_new_rounded,
+                Icon(Icons.open_in_new_rounded,
                     size: 15, color: Colors.white),
-                const SizedBox(width: 7),
-                const Text('Manage Active Trip',
+                SizedBox(width: 7),
+                Text('Manage Active Trip',
                     style: TextStyle(
                         color: Colors.white,
                         fontSize: 13,
@@ -722,12 +722,12 @@ class _ErrorBody extends StatelessWidget {
               ),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Row(mainAxisSize: MainAxisSize.min,
+            child: const Row(mainAxisSize: MainAxisSize.min,
                 children: [
-              const Icon(Icons.refresh_rounded,
+              Icon(Icons.refresh_rounded,
                   size: 16, color: Colors.white),
-              const SizedBox(width: 8),
-              const Text('Try Again',
+              SizedBox(width: 8),
+              Text('Try Again',
                   style: TextStyle(
                       color: Colors.white,
                       fontSize: 14,

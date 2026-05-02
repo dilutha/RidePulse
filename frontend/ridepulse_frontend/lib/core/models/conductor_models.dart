@@ -22,6 +22,10 @@ class RosterModel {
   final String  startLocation;
   final String  endLocation;
   final double  baseFare;
+  final String  staffName;
+  final String  staffType;
+  final String  employeeId;
+  final int?    staffId;
   // Active trip (null if not started)
   final int?    activeTripId;
   final String? tripStatus;
@@ -34,7 +38,9 @@ class RosterModel {
     required this.busCapacity, required this.routeId,
     required this.routeNumber, required this.routeName,
     required this.startLocation, required this.endLocation,
-    required this.baseFare,    this.activeTripId,
+    required this.baseFare,    this.staffName = '',
+    this.staffType = '',       this.employeeId = '',
+    this.staffId,              this.activeTripId,
     this.tripStatus,
   });
 
@@ -54,15 +60,23 @@ class RosterModel {
     startLocation:      j['startLocation']      ?? '',
     endLocation:        j['endLocation']        ?? '',
     baseFare:           (j['baseFare']  as num?)?.toDouble() ?? 0,
+    staffName:          j['staffName']          ?? '',
+    staffType:          j['staffType']          ?? '',
+    employeeId:         j['employeeId']         ?? '',
+    staffId:            (j['staffId'] as num?)?.toInt(),
     activeTripId:       j['activeTripId'],
     tripStatus:         j['tripStatus'],
   );
+
+  factory RosterModel.fromRosterDetail(Map<String, dynamic> j) =>
+      RosterModel.fromJson(j);
 
   // Encapsulation: status helpers computed from status string
   bool get isScheduled => status == 'scheduled';
   bool get isActive     => status == 'active';
   bool get isCompleted  => status == 'completed';
   bool get hasTripActive => activeTripId != null && tripStatus == 'in_progress';
+  bool get isDriver => staffType == 'driver';
 }
 
 

@@ -52,8 +52,9 @@ class AuthorityShell extends ConsumerWidget {
                   'Dashboard',   '/authority/dashboard',   loc),
               _item(context, Icons.report_problem_outlined,
                   'Complaints',  '/authority/complaints',  loc),
-              _item(context, Icons.auto_graph_outlined,
-                    'Predictions', '/authority/predictions', loc),
+              _item(context, Icons.route_outlined,
+                    'Route Optimization',
+                    '/authority/route-optimization', loc),
               const Spacer(),
               const Divider(color: Color(0xFF312E81), height: 1),
               ListTile(

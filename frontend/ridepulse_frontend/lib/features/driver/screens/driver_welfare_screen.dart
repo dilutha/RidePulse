@@ -32,8 +32,8 @@ class DriverWelfareScreen extends ConsumerWidget {
               dutyDays:    dash.dutyDaysThisMonth),
           ),
           const SizedBox(height: 14),
-          Card(color: const Color(0xFFEFF6FF),
-            child: const Padding(padding: EdgeInsets.all(12),
+          const Card(color: Color(0xFFEFF6FF),
+            child: Padding(padding: EdgeInsets.all(12),
               child: Row(children: [
                 Icon(Icons.info_outline, color: Color(0xFF1E40AF), size: 18),
                 SizedBox(width: 10),
@@ -49,7 +49,7 @@ class DriverWelfareScreen extends ConsumerWidget {
           const SizedBox(height: 10),
           welfareAsync.when(
             loading: () => const CircularProgressIndicator(),
-            error:   (e, _) => Text("Error: \$e"),
+            error:   (e, _) => const Text("Error: \$e"),
             data: (list) => list.isEmpty
                 ? const Center(child: Text("No welfare records yet",
                     style: TextStyle(color: Colors.grey)))
@@ -62,17 +62,17 @@ class DriverWelfareScreen extends ConsumerWidget {
                               color: Colors.white, size: 18)),
                       title: Text(w.monthLabel,
                           style: const TextStyle(fontWeight: FontWeight.w600)),
-                      subtitle: Text("Bus: \${w.busNumber}"),
-                      trailing: Column(
+                      subtitle: const Text("Bus: \${w.busNumber}"),
+                      trailing: const Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text("LKR \${w.welfareAmount.toStringAsFixed(2)}",
-                              style: const TextStyle(
+                              style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: Color(0xFF1E40AF))),
                           Text("Total: LKR \${w.cumulativeBalance.toStringAsFixed(0)}",
-                              style: const TextStyle(
+                              style: TextStyle(
                                   fontSize: 11, color: Colors.grey)),
                         ]),
                     ))).toList()),
@@ -95,10 +95,10 @@ class _SummaryCard extends StatelessWidget {
         gradient: const LinearGradient(
             colors: [Color(0xFF1E3A8A), Color(0xFF3B82F6)]),
         borderRadius: BorderRadius.circular(16)),
-    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      const Text("Welfare Summary (Driver — 3%)",
+    child: const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text("Welfare Summary (Driver — 3%)",
           style: TextStyle(color: Colors.white70, fontSize: 13)),
-      const SizedBox(height: 14),
+      SizedBox(height: 14),
       Row(children: [
         _Fig("This Month", "LKR \${thisMonth.toStringAsFixed(2)}"),
         _Fig("Total Balance", "LKR \${totalBalance.toStringAsFixed(2)}"),

@@ -39,9 +39,9 @@ class ConductorWelfareScreen extends ConsumerWidget {
           const SizedBox(height: 16),
 
           // Info card
-          Card(
-            color: const Color(0xFFEFF6FF),
-            child: const Padding(
+          const Card(
+            color: Color(0xFFEFF6FF),
+            child: Padding(
               padding: EdgeInsets.all(14),
               child: Row(children: [
                 Icon(Icons.info_outline,
@@ -88,19 +88,19 @@ class _SummaryCard extends StatelessWidget {
         gradient: const LinearGradient(
             colors: [Color(0xFF5B21B6), Color(0xFF8B5CF6)]),
         borderRadius: BorderRadius.circular(16)),
-    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      const Text('Welfare Summary',
+    child: const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text('Welfare Summary',
           style: TextStyle(color: Colors.white70, fontSize: 13)),
-      const SizedBox(height: 14),
+      SizedBox(height: 14),
       Row(children: [
         Expanded(child: _Figure('This Month',
             'LKR \${thisMonth.toStringAsFixed(2)}')),
         Expanded(child: _Figure('Total Balance',
             'LKR \${totalBalance.toStringAsFixed(2)}')),
       ]),
-      const SizedBox(height: 14),
-      const Divider(color: Colors.white24),
-      const SizedBox(height: 10),
+      SizedBox(height: 14),
+      Divider(color: Colors.white24),
+      SizedBox(height: 10),
       Row(children: [
         Expanded(child: _Figure('Tickets Issued', '\$tickets')),
         Expanded(child: _Figure('Fare Collected',
@@ -135,17 +135,17 @@ class _WelfareRow extends StatelessWidget {
               color: Color(0xFF8B5CF6), size: 20)),
       title: Text(w.monthLabel,
           style: const TextStyle(fontWeight: FontWeight.w600)),
-      subtitle: Text('Bus: \${w.busNumber}'),
-      trailing: Column(
+      subtitle: const Text('Bus: \${w.busNumber}'),
+      trailing: const Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Text('LKR \${w.welfareAmount.toStringAsFixed(2)}',
-                style: const TextStyle(
+                style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF8B5CF6))),
             Text('Total: LKR \${w.cumulativeBalance.toStringAsFixed(0)}',
-                style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                style: TextStyle(fontSize: 11, color: Colors.grey)),
           ]),
     ),
   );

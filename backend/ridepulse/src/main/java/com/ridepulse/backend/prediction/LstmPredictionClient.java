@@ -1,6 +1,7 @@
 package com.ridepulse.backend.prediction;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ridepulse.backend.dto.CrowdPredictionDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -93,5 +94,67 @@ public class LstmPredictionClient {
             log.error("LSTM batch prediction call failed: {}", e.getMessage(), e);
             return null;
         }
+    }
+
+    public CrowdPredictionDTO requestSinglePrediction(
+            Integer routeId,
+            String routeName,
+            String targetDateTime,
+            Integer busCapacity,
+            String weather,
+            Double rain,
+            String trafficLevel) {
+
+        if (!enabled) {
+            log.info("LSTM service disabled — skipping single prediction.");
+            return null;
+        }
+
+        Map<String, Object> request = Map.of(
+                "route_id", routeId,
+                "target_datetime", targetDateTime,
+                "bus_capacity", busCapacity,
+                "weather", weather,
+                "rain", rain,
+                "traffic_level", trafficLevel
+        );
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        try {
+            ResponseEntity<Map> res = restTemplate.exchange(
+                    lstmServiceUrl + "/predict/single",
+                    HttpMethod.POST,
+                    new HttpEntity<>(request, headers),
+                    Map.class
+            );
+            Map<?, ?> body = res.getBody();
+            if (body == null) return null;
+
+            return CrowdPredictionDTO.builder()
+                    .routeId(routeId)
+                    .routeName(routeName)
+                    .predictionDate(String.valueOf(body.get("prediction_date")))
+                    .timeSlot(String.valueOf(body.get("time_slot")))
+                    .predictedPercentage(asDouble(body.get("predicted_percentage")))
+                    .predictedCategory(String.valueOf(body.get("predicted_category")))
+                    .confidenceScore(asDouble(body.get("confidence_score")))
+                    .modelVersion(String.valueOf(body.get("model_version")))
+                    .isAvailable(true)
+                    .build();
+
+        } catch (ResourceAccessException e) {
+            log.error("LSTM service unreachable at {}: {}",
+                    lstmServiceUrl, e.getMessage());
+            return null;
+        } catch (Exception e) {
+            log.error("LSTM single prediction call failed: {}", e.getMessage(), e);
+            return null;
+        }
+    }
+
+    private Double asDouble(Object value) {
+        return value instanceof Number n ? n.doubleValue() : null;
     }
 }

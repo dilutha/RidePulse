@@ -53,6 +53,7 @@ class BusOwnerShell extends ConsumerWidget {
               _item(context, Icons.dashboard_outlined,       'Dashboard',  '/bus-owner/dashboard',  loc),
               _item(context, Icons.directions_bus_outlined,  'My Buses',   '/bus-owner/buses',       loc),
               _item(context, Icons.people_outline,           'Staff',      '/bus-owner/staff',       loc),
+              _item(context, Icons.event_note_outlined,       'Duty Roster','/bus-owner/roster',      loc),
               _item(context, Icons.location_on_outlined,     'Live Map',   '/bus-owner/live-map',    loc),
               _item(context, Icons.bar_chart_outlined,       'Revenue',    '/bus-owner/revenue',     loc),
               _item(context, Icons.volunteer_activism_outlined,'Welfare',  '/bus-owner/welfare',     loc),

@@ -45,9 +45,11 @@ class _DriverTripScreenState extends ConsumerState<DriverTripScreen> {
       final trip = await ref.read(apiServiceProvider).driverStartTrip(roster.rosterId);
       _startGpsLoop(trip.tripId);
       ref.invalidate(driverDashboardProvider);
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Trip started — GPS tracking active"),
               backgroundColor: Colors.green));
+      }
     } catch (e) {
       setState(() => _error = e.toString().replaceFirst("Exception: ", ""));
     } finally { setState(() => _loading = false); }
@@ -57,7 +59,7 @@ class _DriverTripScreenState extends ConsumerState<DriverTripScreen> {
     final confirm = await showDialog<bool>(context: context,
       builder: (_) => AlertDialog(
         title: const Text("Stop Trip"),
-        content: Text("Complete trip on \${trip.busNumber}?"),
+        content: const Text("Complete trip on \${trip.busNumber}?"),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false),
               child: const Text("Cancel")),
@@ -74,9 +76,11 @@ class _DriverTripScreenState extends ConsumerState<DriverTripScreen> {
     try {
       await ref.read(apiServiceProvider).driverStopTrip(trip.tripId);
       ref.invalidate(driverDashboardProvider);
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Trip completed"),
               backgroundColor: Colors.green));
+      }
     } catch (e) {
       setState(() => _error = e.toString().replaceFirst("Exception: ", ""));
     } finally { setState(() => _loading = false); }
@@ -94,17 +98,19 @@ class _DriverTripScreenState extends ConsumerState<DriverTripScreen> {
       ),
       body: dashAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error:   (e, _) => Center(child: Text("Error: \$e")),
+        error:   (e, _) => const Center(child: Text("Error: \$e")),
         data: (dash) {
           final roster = dash.todayRoster;
           final trip   = dash.activeTrip;
 
-          if (roster == null) return const Center(child: Column(
+          if (roster == null) {
+            return const Center(child: Column(
             mainAxisAlignment: MainAxisAlignment.center, children: [
             Icon(Icons.event_busy, size: 60, color: Colors.grey),
             SizedBox(height: 12),
             Text("No duty today", style: TextStyle(color: Colors.grey)),
           ]));
+          }
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(20),
@@ -264,8 +270,8 @@ class _TripLiveCard extends StatelessWidget {
       const SizedBox(height: 8),
       Text(trip.routeName, style: const TextStyle(
           color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-      Text("Started: \${trip.tripStart}",
-          style: const TextStyle(color: Colors.white70, fontSize: 12)),
+      const Text("Started: \${trip.tripStart}",
+          style: TextStyle(color: Colors.white70, fontSize: 12)),
     ]),
   );
 }

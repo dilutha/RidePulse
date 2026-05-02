@@ -7,48 +7,76 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/auth_models.dart';
+import '../models/authority_models.dart';
 import '../models/bus_models.dart';
 import '../models/complaint_models.dart';
 import '../models/conductor_models.dart';
 import '../models/driver_models.dart';
 import '../models/passenger_models.dart';
 
-import '../models/authority_models.dart';
-
-
 const String _base = 'http://localhost:8080/api/v1';
 
-final authorityDashboardStatsProvider =
-    FutureProvider.autoDispose<AuthorityDashboardStats>((ref) async {
-  return ref.read(apiServiceProvider).getAuthorityDashboardStats();
+// ── Provider declarations ────────────────────────────────────
+
+final apiServiceProvider = Provider<ApiService>((ref) => ApiService());
+
+// Bus owner providers
+final busListProvider = FutureProvider.autoDispose<List<BusModel>>((ref) async {
+  return ref.read(apiServiceProvider).getBuses();
 });
 
-final authorityBusesProvider =
-    FutureProvider.autoDispose<List<AuthorityBus>>((ref) async {
-  return ref.read(apiServiceProvider).getAuthorityBuses();
+final routeDropdownProvider = FutureProvider.autoDispose<List<RouteModel>>((ref) async {
+  return ref.read(apiServiceProvider).getRoutes();
 });
 
-final authorityDriversProvider =
-    FutureProvider.autoDispose<List<AuthorityStaff>>((ref) async {
-  return ref.read(apiServiceProvider).getAuthorityDrivers();
+final busServiceProvider = Provider<ApiService>((ref) => ApiService());
+
+final busLocationsProvider = FutureProvider.autoDispose<List<BusLocationModel>>((ref) async {
+  return ref.read(apiServiceProvider).getLiveBusLocations();
 });
 
-final authorityConductorsProvider =
-    FutureProvider.autoDispose<List<AuthorityStaff>>((ref) async {
-  return ref.read(apiServiceProvider).getAuthorityConductors();
+// Staff providers
+// OOP Polymorphism: same provider factory works for both driver and conductor
+final staffListProvider = FutureProvider.autoDispose
+    .family<List<StaffModel>, String>((ref, staffType) async {
+  return ref.read(apiServiceProvider).getStaff(staffType: staffType);
 });
 
-final authorityOwnersProvider =
-    FutureProvider.autoDispose<List<AuthorityOwner>>((ref) async {
-  return ref.read(apiServiceProvider).getAuthorityOwners();
+final staffServiceProvider = Provider<ApiService>((ref) => ApiService());
+
+// Revenue providers
+final monthlyRevenueProvider = FutureProvider.autoDispose
+    .family<List<MonthlyRevenueModel>, ({int month, int year})>(
+        (ref, params) async {
+  return ref.read(apiServiceProvider)
+      .getMonthlyRevenue(month: params.month, year: params.year);
 });
 
-final authorityFaresProvider =
-    FutureProvider.autoDispose<List<FareConfig>>((ref) async {
-  return ref.read(apiServiceProvider).getAuthorityFares();
+// Welfare provider
+final welfareProvider = FutureProvider.autoDispose
+    .family<List<StaffModel>, ({int month, int year})>(
+        (ref, params) async {
+  return ref.read(apiServiceProvider)
+      .getWelfareSummary(month: params.month, year: params.year);
 });
 
+// Complaint providers
+final myComplaintsProvider =
+    FutureProvider.autoDispose<List<ComplaintSummary>>((ref) async {
+  return ref.read(apiServiceProvider).getMyComplaints();
+});
 
+final authorityComplaintsProvider = FutureProvider.autoDispose
+    .family<List<ComplaintSummary>, ({String? status, String? category})>(
+        (ref, params) async {
+  return ref.read(apiServiceProvider)
+      .getAuthorityComplaints(status: params.status, category: params.category);
+});
+
+final complaintStatsProvider =
+    FutureProvider.autoDispose<ComplaintStats>((ref) async {
+  return ref.read(apiServiceProvider).getComplaintStats();
+});
 
 // ── Conductor providers ───────────────────────────────────────
 final conductorDashboardProvider =
@@ -107,6 +135,14 @@ final crowdPredictionProvider = FutureProvider.autoDispose
 // ── Driver providers ──────────────────────────────────────────
 final driverDashboardProvider =
     FutureProvider.autoDispose<DriverDashboardModel>((ref) async {
+
+  final prefs = await SharedPreferences.getInstance();
+  final token = prefs.getString('access_token');
+
+  if (token == null) {
+    throw Exception("No token found");
+  }
+
   return ref.read(apiServiceProvider).getDriverDashboard();
 });
 
@@ -125,6 +161,37 @@ final driverWelfareProvider =
   return ref.read(apiServiceProvider).getDriverWelfare();
 });
 
+// ── Authority providers ───────────────────────────────────────
+final authorityDashboardStatsProvider =
+    FutureProvider.autoDispose<AuthorityDashboardStats>((ref) async {
+  return ref.read(apiServiceProvider).getAuthorityDashboardStats();
+});
+
+final authorityBusesProvider =
+    FutureProvider.autoDispose<List<AuthorityBus>>((ref) async {
+  return ref.read(apiServiceProvider).getAuthorityBuses();
+});
+
+final authorityDriversProvider =
+    FutureProvider.autoDispose<List<AuthorityStaff>>((ref) async {
+  return ref.read(apiServiceProvider).getAuthorityDrivers();
+});
+
+final authorityConductorsProvider =
+    FutureProvider.autoDispose<List<AuthorityStaff>>((ref) async {
+  return ref.read(apiServiceProvider).getAuthorityConductors();
+});
+
+final authorityOwnersProvider =
+    FutureProvider.autoDispose<List<AuthorityOwner>>((ref) async {
+  return ref.read(apiServiceProvider).getAuthorityOwners();
+});
+
+final authorityFaresProvider =
+    FutureProvider.autoDispose<List<FareConfig>>((ref) async {
+  return ref.read(apiServiceProvider).getAuthorityFares();
+});
+
 // ── ApiService class ─────────────────────────────────────────
 
 class ApiService {
@@ -141,35 +208,59 @@ class ApiService {
     final res = await http.get(Uri.parse('$_base$path'),
         headers: await _headers);
     _check(res);
-    return jsonDecode(res.body);
+    return _decode(res);
   }
 
   Future<dynamic> _post(String path, Map<String, dynamic> body) async {
     final res = await http.post(Uri.parse('$_base$path'),
         headers: await _headers, body: jsonEncode(body));
     _check(res);
-    return jsonDecode(res.body);
+    return _decode(res);
   }
 
   Future<dynamic> _patch(String path, Map<String, dynamic> body) async {
     final res = await http.patch(Uri.parse('$_base$path'),
         headers: await _headers, body: jsonEncode(body));
     _check(res);
-    return jsonDecode(res.body);
+    return _decode(res);
   }
 
   Future<dynamic> _delete(String path) async {
     final res = await http.delete(Uri.parse('$_base$path'),
         headers: await _headers);
     _check(res);
-    return jsonDecode(res.body);
+    return _decode(res);
   }
 
   void _check(http.Response res) {
     if (res.statusCode >= 400) {
-      final body = jsonDecode(res.body);
-      throw Exception(body['message'] ?? 'Error ${res.statusCode}');
+      var message = 'Error ${res.statusCode}';
+      if (res.body.trim().isNotEmpty) {
+        try {
+          final body = jsonDecode(res.body);
+          if (body is Map) {
+            message = body['message'] ??
+                body['error'] ??
+                body['detail'] ??
+                message;
+          }
+        } catch (_) {
+          message = res.body;
+        }
+      } else if (res.statusCode == 401) {
+        message = 'Session expired. Please log in again.';
+      } else if (res.statusCode == 403) {
+        message = 'Access denied for this account.';
+      } else if (res.statusCode == 404) {
+        message = 'Requested API endpoint was not found.';
+      }
+      throw Exception(message);
     }
+  }
+
+  dynamic _decode(http.Response res) {
+    if (res.body.trim().isEmpty) return null;
+    return jsonDecode(res.body);
   }
 
   // ── Routes ────────────────────────────────────────────────
@@ -383,6 +474,7 @@ class ApiService {
     required int routeId,
     required int boardingStopId,
     required int alightingStopId,
+    int ticketCount = 1,
     String paymentMethod = 'cash',
     String? passengerUserId,
   }) async {
@@ -391,6 +483,7 @@ class ApiService {
       'routeId':         routeId,
       'boardingStopId':  boardingStopId,
       'alightingStopId': alightingStopId,
+      'ticketCount':     ticketCount,
       'paymentMethod':   paymentMethod,
       'passengerUserId': passengerUserId,
     });
@@ -407,6 +500,22 @@ class ApiService {
     final data = await _post('/conductor/crowd/update',
         {'tripId': tripId, 'passengerCount': count});
     return TripModel.fromJson(data);
+  }
+
+  Future<void> sendConductorGpsUpdate({
+    required int tripId,
+    required double latitude,
+    required double longitude,
+    double? speedKmh,
+    double? heading,
+  }) async {
+    await _post('/conductor/gps/update', {
+      'tripId':    tripId,
+      'latitude':  latitude,
+      'longitude': longitude,
+      'speedKmh':  speedKmh,
+      'heading':   heading,
+    });
   }
 
   // ── Conductor — Route Stops ────────────────────────────────
@@ -452,6 +561,25 @@ class ApiService {
     final data = await _get(
         '/passenger/routes/$routeId/predictions?date=$date');
     return RoutePredictionSchedule.fromJson(data);
+  }
+
+  Future<List<StopModel>> getPassengerRouteStops(int routeId) async {
+    final data = await _get('/passenger/routes/$routeId/stops') as List;
+    return data.map((e) => StopModel.fromJson(e)).toList();
+  }
+
+  Future<CrowdPredictionSlot> getSingleCrowdPrediction({
+    required int routeId,
+    required String date,
+    required String time,
+    required String location,
+  }) async {
+    final data = await _post('/passenger/routes/$routeId/predictions/single', {
+      'date': date,
+      'time': time,
+      'location': location,
+    });
+    return CrowdPredictionSlot.fromJson(data);
   }
 
   // ── Authority — Prediction trigger ────────────────────────
@@ -545,9 +673,8 @@ class ApiService {
     final data = await _get('/driver/welfare') as List;
     return data.map((e) => ConductorWelfareModel.fromJson(e)).toList();
   }
-}
 
-// ── Authority — Dashboard ──────────────────────────────────
+  // ── Authority — Dashboard ──────────────────────────────────
   Future<AuthorityDashboardStats> getAuthorityDashboardStats() async {
     final data = await _get('/authority/dashboard/stats');
     return AuthorityDashboardStats.fromJson(data);
@@ -593,3 +720,63 @@ class ApiService {
     return FareConfig.fromJson(data);
   }
 
+  // ── Bus Owner — Roster ─────────────────────────────────────
+  Future<List<dynamic>> getBusOwnerRosters(
+      {required String from, required String to}) async {
+    return await _get('/bus-owner/roster?from=$from&to=$to') as List;
+  }
+
+  Future<dynamic> createRoster({
+    required int    staffId,
+    required int    busId,
+    required String dutyDate,
+    required String shiftStart,
+    required String shiftEnd,
+  }) async {
+    return await _post('/bus-owner/roster', {
+      'staffId':    staffId,
+      'busId':      busId,
+      'dutyDate':   dutyDate,
+      'shiftStart': shiftStart,
+      'shiftEnd':   shiftEnd,
+    });
+  }
+
+  Future<void> deleteRoster(int rosterId) async {
+    await _delete('/bus-owner/roster/$rosterId');
+  }
+
+  Future<dynamic> updateRosterByOwner({
+    required int     rosterId,
+    String?  shiftStart,
+    String?  shiftEnd,
+    String?  dutyDate,
+    String?  status,
+  }) async {
+    return await _patch('/bus-owner/roster/$rosterId', {
+      if (shiftStart != null) 'shiftStart': shiftStart,
+      if (shiftEnd   != null) 'shiftEnd':   shiftEnd,
+      if (dutyDate   != null) 'dutyDate':   dutyDate,
+      if (status     != null) 'status':     status,
+    });
+  }
+
+  // ── Authority — Roster ─────────────────────────────────────
+  Future<List<dynamic>> getAuthorityRosters(
+      {required String from, required String to}) async {
+    return await _get('/authority/roster?from=$from&to=$to') as List;
+  }
+
+  Future<dynamic> updateRosterByAuthority({
+    required int    rosterId,
+    String?  shiftStart,
+    String?  shiftEnd,
+    String?  status,
+  }) async {
+    return await _patch('/authority/roster/$rosterId', {
+      if (shiftStart != null) 'shiftStart': shiftStart,
+      if (shiftEnd   != null) 'shiftEnd':   shiftEnd,
+      if (status     != null) 'status':     status,
+    });
+  }
+}

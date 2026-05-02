@@ -170,7 +170,7 @@ class _ThisMonthCard extends StatelessWidget {
           _HeroStat('Total Balance',
               'LKR ${dash.totalWelfareBalance.toStringAsFixed(0)}',
               Icons.account_balance_wallet_outlined),
-          _HeroStat('Rate', '3% of net profit',
+          const _HeroStat('Rate', '3% of net profit',
               Icons.percent_outlined),
         ]),
       ]),
@@ -221,11 +221,11 @@ class _BreakdownCard extends StatelessWidget {
         const SizedBox(height: 16),
 
         // Salary row — placeholder until API exposes it
-        _BreakRow(
+        const _BreakRow(
           icon: Icons.work_outline,
           label: 'Base Salary',
           value: 'Set by Bus Owner',
-          color: const Color(0xFF3B82F6),
+          color: Color(0xFF3B82F6),
           isPlaceholder: true),
         const Divider(height: 20),
 

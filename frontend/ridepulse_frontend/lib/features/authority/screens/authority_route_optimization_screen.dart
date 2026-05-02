@@ -3,7 +3,6 @@
 // Coming Soon placeholder
 // ============================================================
 import "package:flutter/material.dart";
-import "package:go_router/go_router.dart";
 
 class AuthorityRouteOptimizationScreen extends StatelessWidget {
   const AuthorityRouteOptimizationScreen({super.key});
@@ -29,7 +28,7 @@ class AuthorityRouteOptimizationScreen extends StatelessWidget {
               style: TextStyle(
                   fontSize: 24, fontWeight: FontWeight.bold)),
           const SizedBox(height: 12),
-          Text("AI-powered route optimization for public buses.",
+          Text("Route optimisation will be added in future updates.",
               textAlign: TextAlign.center,
               style: TextStyle(
                   color: Colors.grey.shade600, fontSize: 15)),

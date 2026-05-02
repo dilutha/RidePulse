@@ -55,7 +55,7 @@ class _State extends ConsumerState<AuthorityBusesScreen> {
         const Divider(height: 1),
         Expanded(child: async.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error:   (e, _) => Center(child: Text("Error: \$e")),
+          error:   (e, _) => const Center(child: Text("Error: \$e")),
           data: (buses) {
             final filtered = buses.where((b) {
               if (_filter == "active"  && !b.isActive) return false;
@@ -69,9 +69,11 @@ class _State extends ConsumerState<AuthorityBusesScreen> {
               return true;
             }).toList();
 
-            if (filtered.isEmpty) return const Center(
+            if (filtered.isEmpty) {
+              return const Center(
                 child: Text("No buses found",
                     style: TextStyle(color: Colors.grey)));
+            }
 
             return ListView.builder(
               padding: const EdgeInsets.all(14),
@@ -162,12 +164,12 @@ class _BusCard extends StatelessWidget {
             overflow: TextOverflow.ellipsis)),
       ]),
       const SizedBox(height: 4),
-      Row(children: [
-        const Icon(Icons.route, size: 13, color: Colors.grey),
-        const SizedBox(width: 4),
+      const Row(children: [
+        Icon(Icons.route, size: 13, color: Colors.grey),
+        SizedBox(width: 4),
         Expanded(child: Text(
             "\${bus.routeNumber} — \${bus.routeName}",
-            style: const TextStyle(fontSize: 12,
+            style: TextStyle(fontSize: 12,
                 fontWeight: FontWeight.w500),
             overflow: TextOverflow.ellipsis)),
       ]),
@@ -187,8 +189,8 @@ class _BusCard extends StatelessWidget {
             style: TextStyle(color: Colors.grey.shade500, fontSize: 11)),
         if (bus.speedKmh != null) ...[
           const SizedBox(width: 8),
-          Text("\${bus.speedKmh!.toStringAsFixed(0)} km/h",
-              style: const TextStyle(color: Colors.grey, fontSize: 11)),
+          const Text("\${bus.speedKmh!.toStringAsFixed(0)} km/h",
+              style: TextStyle(color: Colors.grey, fontSize: 11)),
         ],
       ]),
     ])),

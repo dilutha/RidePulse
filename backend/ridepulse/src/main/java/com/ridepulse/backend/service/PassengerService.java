@@ -19,4 +19,11 @@ public interface PassengerService {
 
     /** Crowd prediction for a route on a given date (full day) */
     RoutePredictionScheduleDTO getCrowdPredictions(Integer routeId, String date);
+
+    /** On-demand LSTM prediction for selected route/time/location */
+    CrowdPredictionDTO getSingleCrowdPrediction(
+            Integer routeId, String date, String time, String location);
+
+    /** Public route stops for passenger prediction input */
+    List<StopDTO> getRouteStops(Integer routeId);
 }

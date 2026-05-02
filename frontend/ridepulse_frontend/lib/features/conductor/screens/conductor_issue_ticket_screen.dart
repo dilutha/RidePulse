@@ -22,6 +22,7 @@ class _ConductorIssueTicketScreenState
   StopModel?   _boarding;
   StopModel?   _alighting;
   String       _paymentMethod = 'cash';
+  int          _ticketCount   = 1;
   bool         _loading       = false;
   String?      _error;
   TicketModel? _issuedTicket;
@@ -57,6 +58,7 @@ class _ConductorIssueTicketScreenState
         routeId:         roster.routeId,
         boardingStopId:  _boarding!.stopId,
         alightingStopId: _alighting!.stopId,
+        ticketCount:     _ticketCount,
         paymentMethod:   _paymentMethod,
       );
       ref.invalidate(conductorDashboardProvider);
@@ -66,6 +68,7 @@ class _ConductorIssueTicketScreenState
         _issuedTicket = ticket;
         _boarding     = null;
         _alighting    = null;
+        _ticketCount   = 1;
       });
     } catch (e) {
       setState(() =>
@@ -174,6 +177,16 @@ class _ConductorIssueTicketScreenState
                                 setState(() => _alighting = s),
                           ),
                         ]),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      _SectionLabel('Ticket Count'),
+                      const SizedBox(height: 12),
+                      _TicketCountStepper(
+                        value: _ticketCount,
+                        onChanged: (value) =>
+                            setState(() => _ticketCount = value),
                       ),
 
                       const SizedBox(height: 20),
@@ -409,6 +422,54 @@ class _PaymentChip extends StatelessWidget {
                 fontSize: 13)),
       ]),
     ),
+  );
+}
+
+class _TicketCountStepper extends StatelessWidget {
+  final int value;
+  final ValueChanged<int> onChanged;
+  const _TicketCountStepper({
+    required this.value,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: Colors.white.withOpacity(0.05),
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: Colors.white.withOpacity(0.1)),
+    ),
+    child: Row(children: [
+      Icon(Icons.groups_rounded,
+          size: 18, color: Colors.white.withOpacity(0.5)),
+      const SizedBox(width: 10),
+      Expanded(child: Text('Passengers boarding',
+          style: TextStyle(
+              color: Colors.white.withOpacity(0.7),
+              fontSize: 13,
+              fontWeight: FontWeight.w600))),
+      IconButton(
+        onPressed: value > 1 ? () => onChanged(value - 1) : null,
+        icon: const Icon(Icons.remove_circle_outline),
+        color: Colors.white.withOpacity(0.65),
+      ),
+      SizedBox(
+        width: 34,
+        child: Text('$value',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.w700)),
+      ),
+      IconButton(
+        onPressed: value < 50 ? () => onChanged(value + 1) : null,
+        icon: const Icon(Icons.add_circle_outline),
+        color: const Color(0xFF4ADE80),
+      ),
+    ]),
   );
 }
 
