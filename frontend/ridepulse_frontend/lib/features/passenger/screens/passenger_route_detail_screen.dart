@@ -14,7 +14,7 @@ class PassengerRouteDetailScreen extends ConsumerWidget {
     final busesAsync  = ref.watch(activeBusesProvider(routeId));
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF1F5F9),
+      backgroundColor: const Color(0xFF0B1220),
       appBar: AppBar(
         title: const Text('Route Details'),
         leading: IconButton(icon: const Icon(Icons.arrow_back),
@@ -43,33 +43,25 @@ class PassengerRouteDetailScreen extends ConsumerWidget {
             // Active buses
             Expanded(child: busesAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error:   (e, _) => Center(child: Text('Error: $e')),
+              error:   (e, _) => _RouteEmptyState(
+                title: 'Could not load active buses',
+                message: e.toString().replaceFirst('Exception: ', ''),
+              ),
               data: (buses) => buses.isEmpty
-                  ? Center(child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                      const Icon(Icons.directions_bus_outlined,
-                          size: 64, color: Colors.grey),
-                      const SizedBox(height: 12),
-                      const Text('No buses currently on this route',
-                          style: TextStyle(
-                              color: Colors.grey, fontSize: 15)),
-                      const SizedBox(height: 6),
-                      Text('Check back later or view crowd forecast',
-                          style: TextStyle(
-                              color: Colors.grey.shade400, fontSize: 13)),
-                      const SizedBox(height: 16),
-                      OutlinedButton.icon(
-                        onPressed: () => context.go(
-                            '/passenger/routes/$routeId/prediction'),
-                        icon: const Icon(Icons.auto_graph, size: 16),
-                        label: const Text('View Crowd Forecast')),
-                    ]))
+                  ? _RouteEmptyState(
+                      title: 'No active trips',
+                      message: 'No buses are currently running on this route.',
+                      action: OutlinedButton.icon(
+                          onPressed: () => context.go(
+                              '/passenger/routes/$routeId/prediction'),
+                          icon: const Icon(Icons.auto_graph, size: 16),
+                          label: const Text('View Crowd Forecast')),
+                    )
                   : Column(children: [
                       Padding(
                         padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
                         child: Row(children: [
-                          Text('\${buses.length} bus${buses.length == 1 ? "" : "es"} on this route',
+                          Text('${buses.length} bus${buses.length == 1 ? "" : "es"} on this route',
                               style: const TextStyle(
                                   fontWeight: FontWeight.w600, fontSize: 14)),
                           const Spacer(),
@@ -105,7 +97,7 @@ class _RouteBanner extends StatelessWidget {
   const _RouteBanner({required this.route});
   @override
   Widget build(BuildContext context) => Container(
-    color: Colors.white,
+    color: Colors.white.withOpacity(0.04),
     padding: const EdgeInsets.all(16),
     child: Row(children: [
       Container(
@@ -124,13 +116,13 @@ class _RouteBanner extends StatelessWidget {
         Text(route.routeName,
             style: const TextStyle(
                 fontWeight: FontWeight.bold, fontSize: 15)),
-        Text('\${route.startLocation} → \${route.endLocation}',
+        Text('${route.startLocation} → ${route.endLocation}',
             style: TextStyle(
-                color: Colors.grey.shade600, fontSize: 12)),
+                color: Colors.white.withOpacity(0.55), fontSize: 12)),
         const SizedBox(height: 4),
-        Text('Base fare: LKR \${route.baseFare.toStringAsFixed(0)}',
+        Text('Base fare: LKR ${route.baseFare.toStringAsFixed(0)}',
             style: TextStyle(
-                color: Colors.grey.shade600, fontSize: 12)),
+                color: Colors.white.withOpacity(0.55), fontSize: 12)),
       ])),
       const Divider(),
     ]),
@@ -146,6 +138,7 @@ class _BusCard extends StatelessWidget {
     'low'    => const Color(0xFF10B981),
     'medium' => const Color(0xFFF59E0B),
     'high'   => const Color(0xFFEF4444),
+    'full'   => const Color(0xFFDC2626),
     _        => Colors.grey,
   };
 
@@ -153,6 +146,7 @@ class _BusCard extends StatelessWidget {
     'low'    => 'Not Crowded',
     'medium' => 'Moderate',
     'high'   => 'Very Crowded',
+    'full'   => 'Full',
     _        => 'Unknown',
   };
 
@@ -181,9 +175,9 @@ class _BusCard extends StatelessWidget {
             const SizedBox(width: 12),
             Column(crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-              const Text('Capacity: \${bus.passengerCount}/\${bus.capacity}',
-                  style: TextStyle(fontSize: 13)),
-              Text('Updated \${bus.lastUpdated}',
+              Text('Capacity: ${bus.passengerCount}/${bus.capacity}',
+                  style: const TextStyle(fontSize: 13)),
+              Text('Updated ${bus.lastUpdated}',
                   style: TextStyle(
                       color: Colors.grey.shade500, fontSize: 11)),
             ]),
@@ -217,13 +211,13 @@ class _BusCard extends StatelessWidget {
               valueColor: AlwaysStoppedAnimation(_crowdColor))),
           const SizedBox(height: 6),
           Row(children: [
-            Text('\${bus.capacityPercentage.toStringAsFixed(0)}% full',
+            Text('${bus.capacityPercentage.toStringAsFixed(0)}% full',
                 style: TextStyle(color: _crowdColor,
                     fontWeight: FontWeight.w600, fontSize: 12)),
             const Spacer(),
             if (bus.speedKmh != null)
-              const Text('\${bus.speedKmh!.toStringAsFixed(0)} km/h',
-                  style: TextStyle(
+              Text('${bus.speedKmh!.toStringAsFixed(0)} km/h',
+                  style: const TextStyle(
                       color: Colors.grey, fontSize: 12)),
             const SizedBox(width: 8),
             const Text('Tap for live map →',
@@ -233,6 +227,46 @@ class _BusCard extends StatelessWidget {
           ]),
         ]),
       ),
+    ),
+  );
+}
+
+class _RouteEmptyState extends StatelessWidget {
+  final String title;
+  final String message;
+  final Widget? action;
+  const _RouteEmptyState({
+    required this.title,
+    required this.message,
+    this.action,
+  });
+
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        Icon(Icons.directions_bus_outlined,
+            size: 64,
+            color: Colors.white.withOpacity(0.35)),
+        const SizedBox(height: 12),
+        Text(title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w600)),
+        const SizedBox(height: 6),
+        Text(message,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+                color: Colors.white.withOpacity(0.45),
+                fontSize: 13)),
+        if (action != null) ...[
+          const SizedBox(height: 16),
+          action!,
+        ],
+      ]),
     ),
   );
 }

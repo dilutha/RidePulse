@@ -145,6 +145,7 @@ class BusLiveDetail {
 
 class CrowdPredictionSlot {
   final String  timeSlot;
+  final double? predictedCount;
   final double  predictedPercentage;
   final String  predictedCategory;
   final double? confidenceScore;
@@ -153,6 +154,7 @@ class CrowdPredictionSlot {
 
   CrowdPredictionSlot({
     required this.timeSlot,
+    this.predictedCount,
     required this.predictedPercentage,
     required this.predictedCategory,
     this.confidenceScore,
@@ -163,6 +165,8 @@ class CrowdPredictionSlot {
   factory CrowdPredictionSlot.fromJson(Map<String, dynamic> j) =>
       CrowdPredictionSlot(
     timeSlot:             j['timeSlot'] ?? j['time_slot'] ?? '',
+    predictedCount:       ((j['predictedCount'] ??
+            j['predicted_count']) as num?)?.toDouble(),
     predictedPercentage:  ((j['predictedPercentage'] ??
             j['predicted_percentage']) as num?)?.toDouble() ?? 0,
     predictedCategory:    j['predictedCategory'] ??

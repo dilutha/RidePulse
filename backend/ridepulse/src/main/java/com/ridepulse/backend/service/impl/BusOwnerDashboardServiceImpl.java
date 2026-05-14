@@ -5,7 +5,9 @@ import com.ridepulse.backend.entity.*;
 import com.ridepulse.backend.repository.*;
 import com.ridepulse.backend.service.BusOwnerDashboardService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -16,6 +18,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class BusOwnerDashboardServiceImpl implements BusOwnerDashboardService {
 
     // All dependencies injected — Encapsulation: callers never see these repos
@@ -33,7 +36,9 @@ public class BusOwnerDashboardServiceImpl implements BusOwnerDashboardService {
      * Internally aggregates 6 data sources — the controller knows nothing about this.
      */
     @Override
+    @Transactional(readOnly = true)
     public BusOwnerDashboardDTO getDashboard(Integer ownerId) {
+        log.debug("Loading bus-owner dashboard for ownerId={}", ownerId);
         BusOwner owner = ownerRepo.findById(ownerId)
                 .orElseThrow(() -> new RuntimeException("Owner not found"));
 
@@ -83,6 +88,7 @@ public class BusOwnerDashboardServiceImpl implements BusOwnerDashboardService {
      * Polymorphism: "all" status returns every complaint; specific status filters.
      */
     @Override
+    @Transactional(readOnly = true)
     public List<ComplaintSummaryDTO> getComplaints(Integer ownerId, String status) {
         List<Complaint> complaints = "all".equalsIgnoreCase(status)
                 ? complaintRepo.findByOwner(ownerId)
@@ -98,6 +104,7 @@ public class BusOwnerDashboardServiceImpl implements BusOwnerDashboardService {
      * Used by Flutter live map screen.
      */
     @Override
+    @Transactional(readOnly = true)
     public List<BusLocationDTO> getLiveBusLocations(Integer ownerId) {
         return gpsRepo.findLatestLocationForAllBusesOfOwner(ownerId).stream()
                 .map(g -> {

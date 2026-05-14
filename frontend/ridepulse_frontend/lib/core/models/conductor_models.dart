@@ -153,14 +153,18 @@ class StopModel {
   final int    stopId;
   final String stopName;
   final int    stopSequence;
+  final double? latitude;
+  final double? longitude;
 
   StopModel({required this.stopId, required this.stopName,
-      required this.stopSequence});
+      required this.stopSequence, this.latitude, this.longitude});
 
   factory StopModel.fromJson(Map<String, dynamic> j) => StopModel(
     stopId:       j['stopId'],
     stopName:     j['stopName']     ?? '',
     stopSequence: j['stopSequence'] ?? 0,
+    latitude:     (j['latitude']    as num?)?.toDouble(),
+    longitude:    (j['longitude']   as num?)?.toDouble(),
   );
 }
 

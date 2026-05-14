@@ -103,7 +103,8 @@ public class LstmPredictionClient {
             Integer busCapacity,
             String weather,
             Double rain,
-            String trafficLevel) {
+            String trafficLevel,
+            String location) {
 
         if (!enabled) {
             log.info("LSTM service disabled — skipping single prediction.");
@@ -116,7 +117,8 @@ public class LstmPredictionClient {
                 "bus_capacity", busCapacity,
                 "weather", weather,
                 "rain", rain,
-                "traffic_level", trafficLevel
+                "traffic_level", trafficLevel,
+                "location", location != null ? location : ""
         );
 
         HttpHeaders headers = new HttpHeaders();
@@ -137,6 +139,7 @@ public class LstmPredictionClient {
                     .routeName(routeName)
                     .predictionDate(String.valueOf(body.get("prediction_date")))
                     .timeSlot(String.valueOf(body.get("time_slot")))
+                    .predictedCount(asDouble(body.get("predicted_count")))
                     .predictedPercentage(asDouble(body.get("predicted_percentage")))
                     .predictedCategory(String.valueOf(body.get("predicted_category")))
                     .confidenceScore(asDouble(body.get("confidence_score")))

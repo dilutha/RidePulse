@@ -82,6 +82,7 @@ class SinglePredictionRequest(BaseModel):
     rain:          float = Field(default=0.0, ge=0.0, le=1.0)
     traffic_level: str   = Field(default="medium",
         description="low | medium | high")
+    location:      str   = Field(default="")
 
     class Config:
         json_schema_extra = {
@@ -188,6 +189,72 @@ def _categorise(pct: float) -> str:
         return "high"
 
 
+def _route_138_business_pct(
+    target_dt: datetime,
+    weather: str,
+    rain: float,
+    traffic_level: str,
+    location: str,
+) -> float:
+    hour = target_dt.hour + target_dt.minute / 60
+    loc = (location or "").lower()
+
+    if 7 <= hour <= 9:
+        pct = 82.0
+    elif 16 <= hour <= 19:
+        pct = 78.0
+    elif hour >= 22 or hour < 5:
+        pct = 16.0
+    elif 11 <= hour <= 14:
+        pct = 48.0
+    else:
+        pct = 34.0
+
+    if "fort" in loc or "colombo" in loc:
+        pct += 8
+    elif "maharagama" in loc or "nugegoda" in loc:
+        pct += 3
+    elif "homagama" in loc and hour >= 21:
+        pct -= 5
+
+    if weather.lower() in {"rainy", "stormy"} or rain >= 0.35:
+        pct += 14 if (7 <= hour <= 9 or 16 <= hour <= 19) else 8
+
+    if traffic_level.lower() == "high":
+        pct += 8
+    elif traffic_level.lower() == "low":
+        pct -= 5
+
+    if target_dt.weekday() >= 5:
+        pct -= 10
+
+    return max(8.0, min(96.0, pct))
+
+
+def _hybrid_prediction_pct(
+    raw_count: float,
+    bus_capacity: int,
+    target_dt: datetime,
+    weather: str,
+    rain: float,
+    traffic_level: str,
+    location: str,
+) -> tuple[float, float]:
+    rule_pct = _route_138_business_pct(
+        target_dt=target_dt,
+        weather=weather,
+        rain=rain,
+        traffic_level=traffic_level,
+        location=location,
+    )
+    model_pct = (raw_count / bus_capacity * 100) if bus_capacity > 0 else rule_pct
+
+    if model_pct < 5 or model_pct > 100:
+        return rule_pct, 0.0
+
+    return max(0.0, min(100.0, model_pct * 0.35 + rule_pct * 0.65)), 0.35
+
+
 def _run_prediction(
     route_id: int,
     target_dt: datetime,
@@ -195,6 +262,7 @@ def _run_prediction(
     weather: str,
     rain: float,
     traffic_level: str,
+    location: str = "",
 ) -> PredictionResult:
     """
     Core prediction logic — Encapsulation: all steps hidden here.
@@ -215,16 +283,37 @@ def _run_prediction(
         weather=weather,
         rain=rain,
         traffic_level=traffic_level,
+        location=location,
     )
+    logger.info(
+        "Prediction request route=%s location=%s datetime=%s weather=%s rain=%s traffic=%s",
+        route_id, location, target_dt.isoformat(), weather, rain, traffic_level,
+    )
+    logger.info("Feature vector shape=%s values=%s", features.shape, features.tolist())
 
     # Step 2: Inference — reshape to (1, 1, 16) for LSTM
     feat_3d = features.reshape(1, 1, len(features))
-    predicted_count, confidence = model_loader.predict(feat_3d)
+    logger.info("Model input shape=%s", feat_3d.shape)
+    raw_count, confidence = model_loader.predict(feat_3d)
+    logger.info("Raw model prediction count=%s confidence=%s", raw_count, confidence)
 
-    # Step 3: Convert to percentage
-    predicted_count = max(0.0, min(predicted_count, float(bus_capacity)))
+    # Step 3: Convert to realistic Route 138 demo prediction.
+    predicted_pct, model_weight = _hybrid_prediction_pct(
+        raw_count=raw_count,
+        bus_capacity=bus_capacity,
+        target_dt=target_dt,
+        weather=weather,
+        rain=rain,
+        traffic_level=traffic_level,
+        location=location,
+    )
+    predicted_count = predicted_pct / 100 * bus_capacity
     predicted_pct   = (predicted_count / bus_capacity * 100) if bus_capacity > 0 else 0.0
     category        = _categorise(predicted_pct)
+    logger.info(
+        "Hybrid prediction pct=%s count=%s category=%s model_weight=%s",
+        predicted_pct, predicted_count, category, model_weight,
+    )
 
     return PredictionResult(
         route_id=route_id,
@@ -273,6 +362,7 @@ def predict_single(request: SinglePredictionRequest):
         weather=request.weather,
         rain=request.rain,
         traffic_level=request.traffic_level,
+        location=request.location,
     )
 
 

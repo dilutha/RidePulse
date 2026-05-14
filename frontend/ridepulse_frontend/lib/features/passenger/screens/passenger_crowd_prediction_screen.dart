@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import '../../../core/services/api_service.dart';
+import '../../../core/models/conductor_models.dart';
 import '../../../core/models/passenger_models.dart';
 
 class PassengerCrowdPredictionScreen extends ConsumerStatefulWidget {
@@ -16,6 +16,11 @@ class PassengerCrowdPredictionScreen extends ConsumerStatefulWidget {
 class _State extends ConsumerState<PassengerCrowdPredictionScreen>
     with SingleTickerProviderStateMixin {
   DateTime _selectedDate = DateTime.now();
+  TimeOfDay _selectedTime = TimeOfDay.now();
+  StopModel? _selectedStop;
+  CrowdPredictionSlot? _singlePrediction;
+  bool _singleLoading = false;
+  String? _singleError;
 
   late AnimationController _fadeCtrl;
   late Animation<double>   _fadeAnim;
@@ -29,6 +34,10 @@ class _State extends ConsumerState<PassengerCrowdPredictionScreen>
       _selectedDate.year  == DateTime.now().year &&
       _selectedDate.month == DateTime.now().month &&
       _selectedDate.day   == DateTime.now().day;
+
+  String get _timeStr =>
+      '${_selectedTime.hour.toString().padLeft(2, "0")}:'
+      '${_selectedTime.minute.toString().padLeft(2, "0")}';
 
   @override
   void initState() {
@@ -46,6 +55,48 @@ class _State extends ConsumerState<PassengerCrowdPredictionScreen>
     _fadeCtrl.forward(from: 0);
   }
 
+  Future<void> _pickTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _selectedTime,
+    );
+    if (picked != null) {
+      setState(() => _selectedTime = picked);
+    }
+  }
+
+  Future<void> _runSinglePrediction() async {
+    if (_selectedStop == null) {
+      setState(() => _singleError = 'Select passenger location');
+      return;
+    }
+
+    setState(() {
+      _singleLoading = true;
+      _singleError = null;
+    });
+
+    try {
+      final prediction = await ref.read(apiServiceProvider).getSingleCrowdPrediction(
+        routeId: widget.routeId,
+        date: _dateStr,
+        time: _timeStr,
+        location: _selectedStop!.stopName,
+      );
+      if (mounted) {
+        setState(() => _singlePrediction = prediction);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _singleError = e.toString().replaceFirst('Exception: ', ''));
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _singleLoading = false);
+      }
+    }
+  }
+
   @override
   void dispose() {
     _fadeCtrl.dispose();
@@ -56,6 +107,7 @@ class _State extends ConsumerState<PassengerCrowdPredictionScreen>
   Widget build(BuildContext context) {
     final predAsync = ref.watch(crowdPredictionProvider(
         (routeId: widget.routeId, date: _dateStr)));
+    final stopsAsync = ref.watch(passengerRouteStopsProvider(widget.routeId));
 
     return Scaffold(
       backgroundColor: const Color(0xFF0B1220),
@@ -82,6 +134,40 @@ class _State extends ConsumerState<PassengerCrowdPredictionScreen>
             onNext:   () => _changeDate(1),
           ),
 
+          stopsAsync.when(
+            loading: () => const Padding(
+              padding: EdgeInsets.all(16),
+              child: LinearProgressIndicator(),
+            ),
+            error: (e, _) => Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                e.toString().replaceFirst('Exception: ', ''),
+                style: const TextStyle(color: Color(0xFFF87171)),
+              ),
+            ),
+            data: (stops) {
+              if (_selectedStop == null && stops.isNotEmpty) {
+                _selectedStop = stops.first;
+              }
+              return _SinglePredictionPanel(
+                stops: stops,
+                selectedStop: _selectedStop,
+                selectedTime: _timeStr,
+                prediction: _singlePrediction,
+                loading: _singleLoading,
+                error: _singleError,
+                onStopChanged: (stop) => setState(() {
+                  _selectedStop = stop;
+                  _singlePrediction = null;
+                  _singleError = null;
+                }),
+                onPickTime: _pickTime,
+                onPredict: _runSinglePrediction,
+              );
+            },
+          ),
+
           // ── Content ────────────────────────────────────
           Expanded(
             child: FadeTransition(
@@ -101,6 +187,120 @@ class _State extends ConsumerState<PassengerCrowdPredictionScreen>
       ]),
     );
   }
+}
+
+class _SinglePredictionPanel extends StatelessWidget {
+  final List<StopModel> stops;
+  final StopModel? selectedStop;
+  final String selectedTime;
+  final CrowdPredictionSlot? prediction;
+  final bool loading;
+  final String? error;
+  final ValueChanged<StopModel?> onStopChanged;
+  final VoidCallback onPickTime;
+  final VoidCallback onPredict;
+
+  const _SinglePredictionPanel({
+    required this.stops,
+    required this.selectedStop,
+    required this.selectedTime,
+    required this.prediction,
+    required this.loading,
+    required this.error,
+    required this.onStopChanged,
+    required this.onPickTime,
+    required this.onPredict,
+  });
+
+  Color get _color => switch (prediction?.predictedCategory) {
+    'low' => const Color(0xFF4ADE80),
+    'medium' => const Color(0xFFFBBF24),
+    'high' => const Color(0xFFF87171),
+    'full' => const Color(0xFFDC2626),
+    _ => const Color(0xFFC084FC),
+  };
+
+  @override
+  Widget build(BuildContext context) => Container(
+    margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+    padding: const EdgeInsets.all(14),
+    decoration: BoxDecoration(
+      color: Colors.white.withOpacity(0.05),
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: Colors.white.withOpacity(0.08)),
+    ),
+    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Row(children: [
+        Expanded(
+          child: DropdownButtonFormField<StopModel>(
+            value: selectedStop,
+            isExpanded: true,
+            dropdownColor: const Color(0xFF111827),
+            decoration: InputDecoration(
+              labelText: 'Current stop',
+              labelStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: Colors.white.withOpacity(0.12)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: Color(0xFFC084FC)),
+              ),
+            ),
+            style: const TextStyle(color: Colors.white),
+            items: stops.map((s) => DropdownMenuItem(
+              value: s,
+              child: Text(s.stopName),
+            )).toList(),
+            onChanged: onStopChanged,
+          ),
+        ),
+        const SizedBox(width: 10),
+        OutlinedButton.icon(
+          onPressed: onPickTime,
+          icon: const Icon(Icons.schedule_rounded, size: 16),
+          label: Text(selectedTime),
+        ),
+      ]),
+      const SizedBox(height: 10),
+      SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          onPressed: loading ? null : onPredict,
+          icon: loading
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.auto_graph_rounded, size: 18),
+          label: const Text('Predict Crowd'),
+        ),
+      ),
+      if (error != null) ...[
+        const SizedBox(height: 8),
+        Text(error!, style: const TextStyle(color: Color(0xFFF87171), fontSize: 12)),
+      ],
+      if (prediction != null) ...[
+        const SizedBox(height: 12),
+        Row(children: [
+          Icon(Icons.people_alt_rounded, color: _color, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              prediction!.isAvailable
+                  ? '${prediction!.predictedCategory.toUpperCase()} crowd, '
+                      '${prediction!.predictedCount?.toStringAsFixed(0) ?? "-"} passengers, '
+                      '${prediction!.predictedPercentage.toStringAsFixed(0)}% full'
+                  : prediction!.message ?? 'Prediction unavailable',
+              style: TextStyle(color: _color, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ]),
+      ],
+    ]),
+  );
 }
 
 // ── App bar ───────────────────────────────────────────────────
@@ -445,6 +645,7 @@ class _SlotCard extends StatelessWidget {
     'low'    => const Color(0xFF4ADE80),
     'medium' => const Color(0xFFFBBF24),
     'high'   => const Color(0xFFF87171),
+    'full'   => const Color(0xFFDC2626),
     _        => const Color(0xFF94A3B8),
   };
 
@@ -452,6 +653,7 @@ class _SlotCard extends StatelessWidget {
     'low'    => Icons.sentiment_satisfied_rounded,
     'medium' => Icons.sentiment_neutral_rounded,
     'high'   => Icons.sentiment_very_dissatisfied_rounded,
+    'full'   => Icons.no_transfer_rounded,
     _        => Icons.help_outline_rounded,
   };
 
@@ -459,6 +661,7 @@ class _SlotCard extends StatelessWidget {
     'low'    => 'Low crowd',
     'medium' => 'Moderate',
     'high'   => 'Very crowded',
+    'full'   => 'Full',
     _        => 'Unknown',
   };
 

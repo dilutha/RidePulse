@@ -190,9 +190,18 @@ public class ConductorController {
      */
     @PostMapping("/gps/update")
     @PreAuthorize("hasRole('conductor')")
-    public ResponseEntity<Void> updateGps(@RequestBody Map<String, Object> body) {
+    public ResponseEntity<Void> updateGps(
+            @RequestBody Map<String, Object> body,
+            @AuthenticationPrincipal CustomUserDetails user) {
         BusTrip trip = tripRepo.findById(((Number) body.get("tripId")).intValue())
                 .orElseThrow(() -> new RuntimeException("Trip not found"));
+        if (!"in_progress".equals(trip.getStatus())) {
+            throw new RuntimeException("Cannot update GPS — trip is not active");
+        }
+        if (trip.getRoster() == null || trip.getRoster().getStaff() == null
+                || !trip.getRoster().getStaff().getStaffId().equals(user.getStaffId())) {
+            throw new RuntimeException("Unauthorized: trip not assigned to you");
+        }
         gpsRepo.save(GpsTracking.builder()
                 .bus(trip.getBus())
                 .trip(trip)

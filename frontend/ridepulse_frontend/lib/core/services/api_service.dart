@@ -3,10 +3,10 @@
 // OOP Encapsulation: all authenticated API calls + Riverpod providers
 // ============================================================
 import 'dart:convert';
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import '../models/auth_models.dart';
 import '../models/authority_models.dart';
 import '../models/bus_models.dart';
 import '../models/complaint_models.dart';
@@ -15,6 +15,20 @@ import '../models/driver_models.dart';
 import '../models/passenger_models.dart';
 
 const String _base = 'http://localhost:8080/api/v1';
+const Duration _apiTimeout = Duration(seconds: 12);
+
+void _autoRefresh(Ref ref, {Duration interval = const Duration(seconds: 5)}) {
+  var ticks = 0;
+  late final Timer timer;
+  timer = Timer.periodic(interval, (_) {
+    if (++ticks >= 12) {
+      timer.cancel();
+      return;
+    }
+    ref.invalidateSelf();
+  });
+  ref.onDispose(timer.cancel);
+}
 
 // ── Provider declarations ────────────────────────────────────
 
@@ -25,6 +39,12 @@ final busListProvider = FutureProvider.autoDispose<List<BusModel>>((ref) async {
   return ref.read(apiServiceProvider).getBuses();
 });
 
+final busOwnerDashboardProvider =
+    FutureProvider.autoDispose<BusOwnerDashboardModel>((ref) async {
+  _autoRefresh(ref, interval: const Duration(seconds: 30));
+  return ref.read(apiServiceProvider).getBusOwnerDashboard();
+});
+
 final routeDropdownProvider = FutureProvider.autoDispose<List<RouteModel>>((ref) async {
   return ref.read(apiServiceProvider).getRoutes();
 });
@@ -32,6 +52,7 @@ final routeDropdownProvider = FutureProvider.autoDispose<List<RouteModel>>((ref)
 final busServiceProvider = Provider<ApiService>((ref) => ApiService());
 
 final busLocationsProvider = FutureProvider.autoDispose<List<BusLocationModel>>((ref) async {
+  _autoRefresh(ref);
   return ref.read(apiServiceProvider).getLiveBusLocations();
 });
 
@@ -117,11 +138,13 @@ final routeSearchProvider = FutureProvider.autoDispose
 
 final activeBusesProvider = FutureProvider.autoDispose
     .family<List<ActiveBus>, int>((ref, routeId) async {
+  _autoRefresh(ref);
   return ref.read(apiServiceProvider).getActiveBusesOnRoute(routeId);
 });
 
 final busLiveDetailProvider = FutureProvider.autoDispose
     .family<BusLiveDetail, int>((ref, busId) async {
+  _autoRefresh(ref);
   return ref.read(apiServiceProvider).getBusLiveDetail(busId);
 });
 
@@ -130,6 +153,11 @@ final crowdPredictionProvider = FutureProvider.autoDispose
         (ref, params) async {
   return ref.read(apiServiceProvider)
       .getCrowdPredictions(params.routeId, params.date);
+});
+
+final passengerRouteStopsProvider = FutureProvider.autoDispose
+    .family<List<StopModel>, int>((ref, routeId) async {
+  return ref.read(apiServiceProvider).getPassengerRouteStops(routeId);
 });
 
 // ── Driver providers ──────────────────────────────────────────
@@ -206,28 +234,28 @@ class ApiService {
 
   Future<dynamic> _get(String path) async {
     final res = await http.get(Uri.parse('$_base$path'),
-        headers: await _headers);
+        headers: await _headers).timeout(_apiTimeout);
     _check(res);
-    return _decode(res);
+    return _decode(res) ?? <dynamic>[];
   }
 
   Future<dynamic> _post(String path, Map<String, dynamic> body) async {
     final res = await http.post(Uri.parse('$_base$path'),
-        headers: await _headers, body: jsonEncode(body));
+        headers: await _headers, body: jsonEncode(body)).timeout(_apiTimeout);
     _check(res);
     return _decode(res);
   }
 
   Future<dynamic> _patch(String path, Map<String, dynamic> body) async {
     final res = await http.patch(Uri.parse('$_base$path'),
-        headers: await _headers, body: jsonEncode(body));
+        headers: await _headers, body: jsonEncode(body)).timeout(_apiTimeout);
     _check(res);
     return _decode(res);
   }
 
   Future<dynamic> _delete(String path) async {
     final res = await http.delete(Uri.parse('$_base$path'),
-        headers: await _headers);
+        headers: await _headers).timeout(_apiTimeout);
     _check(res);
     return _decode(res);
   }
@@ -260,7 +288,11 @@ class ApiService {
 
   dynamic _decode(http.Response res) {
     if (res.body.trim().isEmpty) return null;
-    return jsonDecode(res.body);
+    try {
+      return jsonDecode(res.body);
+    } catch (_) {
+      throw Exception('Invalid API response. Please try again.');
+    }
   }
 
   // ── Routes ────────────────────────────────────────────────
@@ -357,6 +389,14 @@ class ApiService {
   }
 
   // ── Bus Owner — Dashboard / Map ───────────────────────────
+  Future<BusOwnerDashboardModel> getBusOwnerDashboard() async {
+    final data = await _get('/bus-owner/dashboard');
+    if (data is! Map) {
+      throw Exception('Dashboard data is not available');
+    }
+    return BusOwnerDashboardModel.fromJson(Map<String, dynamic>.from(data));
+  }
+
   Future<List<BusLocationModel>> getLiveBusLocations() async {
     final data =
         await _get('/bus-owner/dashboard/live-locations') as List;

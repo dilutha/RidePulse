@@ -148,6 +148,8 @@ public class ConductorServiceImpl implements ConductorService {
                 .build();
         tripRepo.save(trip);
 
+        saveCrowdSnapshot(trip, 0);
+
         // Mark roster active
         roster.setStatus("active");
         rosterRepo.save(roster);
@@ -220,6 +222,10 @@ public class ConductorServiceImpl implements ConductorService {
         if (!"in_progress".equals(trip.getStatus())) {
             throw new RuntimeException("Cannot issue ticket — trip is not active");
         }
+        if (trip.getRoster() == null || trip.getRoster().getStaff() == null
+                || !trip.getRoster().getStaff().getStaffId().equals(staffId)) {
+            throw new RuntimeException("Unauthorized: trip not assigned to you");
+        }
 
         RouteStop boarding  = stopRepo.findById(req.getBoardingStopId())
                 .orElseThrow(() -> new RuntimeException("Boarding stop not found"));
@@ -264,13 +270,9 @@ public class ConductorServiceImpl implements ConductorService {
 
             ticketRepo.save(ticket);
         }
-        int livePassengerCount = ticketRepo.countByTrip_TripId(trip.getTripId());
-        crowdRepo.save(CrowdLevel.builder()
-                .bus(trip.getBus())
-                .trip(trip)
-                .passengerCount(livePassengerCount)
-                .busCapacity(trip.getBus().getCapacity())
-                .build());
+        int livePassengerCount = ticketRepo.countByTrip_TripIdAndTicketStatus(
+                trip.getTripId(), "active");
+        saveCrowdSnapshot(trip, livePassengerCount);
         log.info("Tickets issued: count={} fareEach={} trip={}", ticketCount, fare, trip.getTripId());
 
         return toTicketDTO(ticket);
@@ -302,6 +304,12 @@ public class ConductorServiceImpl implements ConductorService {
         ticket.setTicketStatus("used");
         ticketRepo.save(ticket);
 
+        if (ticket.getTrip() != null && "in_progress".equals(ticket.getTrip().getStatus())) {
+            int livePassengerCount = ticketRepo.countByTrip_TripIdAndTicketStatus(
+                    ticket.getTrip().getTripId(), "active");
+            saveCrowdSnapshot(ticket.getTrip(), livePassengerCount);
+        }
+
         return toTicketDTO(ticket);
     }
 
@@ -313,14 +321,15 @@ public class ConductorServiceImpl implements ConductorService {
         BusTrip trip = tripRepo.findById(req.getTripId())
                 .orElseThrow(() -> new RuntimeException("Trip not found"));
 
-        CrowdLevel crowd = CrowdLevel.builder()
-                .bus(trip.getBus())
-                .trip(trip)
-                .passengerCount(req.getPassengerCount())
-                .busCapacity(trip.getBus().getCapacity())
-                .build();
-        // @PrePersist on CrowdLevel auto-derives percentage + category
-        crowdRepo.save(crowd);
+        if (!"in_progress".equals(trip.getStatus())) {
+            throw new RuntimeException("Cannot update crowd — trip is not active");
+        }
+        if (trip.getRoster() == null || trip.getRoster().getStaff() == null
+                || !trip.getRoster().getStaff().getStaffId().equals(staffId)) {
+            throw new RuntimeException("Unauthorized: trip not assigned to you");
+        }
+
+        saveCrowdSnapshot(trip, req.getPassengerCount());
 
         return toTripStatusDTO(trip, staffId);
     }
@@ -335,6 +344,8 @@ public class ConductorServiceImpl implements ConductorService {
                         .stopId(s.getStopId())
                         .stopName(s.getStopName())
                         .stopSequence(s.getStopSequence())
+                        .latitude(s.getLatitude() != null ? s.getLatitude().doubleValue() : null)
+                        .longitude(s.getLongitude() != null ? s.getLongitude().doubleValue() : null)
                         .build())
                 .collect(Collectors.toList());
     }
@@ -409,6 +420,18 @@ public class ConductorServiceImpl implements ConductorService {
     private String generateQrCode(String ticketNumber) {
         // QR payload: ticketNumber + timestamp UUID fragment
         return ticketNumber + "-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+    }
+
+    private void saveCrowdSnapshot(BusTrip trip, int passengerCount) {
+        int capacity = trip.getBus().getCapacity() != null ? trip.getBus().getCapacity() : 52;
+        capacity = Math.max(1, capacity);
+        int safeCount = Math.max(0, Math.min(passengerCount, capacity));
+        crowdRepo.save(CrowdLevel.builder()
+                .bus(trip.getBus())
+                .trip(trip)
+                .passengerCount(safeCount)
+                .busCapacity(capacity)
+                .build());
     }
 
     private RosterDetailDTO toRosterDTO(DutyRoster r, Integer staffId) {

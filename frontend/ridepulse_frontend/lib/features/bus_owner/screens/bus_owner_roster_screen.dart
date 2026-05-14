@@ -58,7 +58,7 @@ class _BusOwnerRosterScreenState
     final staffC   = ref.watch(staffListProvider('conductor'));
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: const Color(0xFF0B1220),
       appBar: AppBar(
         title: const Text('Duty Roster'),
         leading: IconButton(icon: const Icon(Icons.arrow_back),
@@ -84,7 +84,7 @@ class _BusOwnerRosterScreenState
       body: Column(children: [
         // Week navigator
         Container(
-          color: Colors.white,
+          color: Colors.white.withOpacity(0.03),
           padding: const EdgeInsets.symmetric(
               horizontal: 8, vertical: 10),
           child: Row(children: [
@@ -104,26 +104,20 @@ class _BusOwnerRosterScreenState
                       const Duration(days: 7)))),
           ]),
         ),
-        const Divider(height: 1),
+        Divider(height: 1, color: Colors.white.withOpacity(0.08)),
 
         // Roster list
         Expanded(child: rAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error:   (e, _) => Center(child: Text('Error: $e')),
+          error:   (e, _) => _RosterEmptyState(
+            title: 'Could not load duty roster',
+            message: e.toString().replaceFirst('Exception: ', ''),
+          ),
           data: (rosters) => rosters.isEmpty
-              ? Center(child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                  const Icon(Icons.event_busy,
-                      size: 60, color: Colors.grey),
-                  const SizedBox(height: 12),
-                  const Text('No rosters this week',
-                      style: TextStyle(color: Colors.grey)),
-                  const SizedBox(height: 6),
-                  Text('Tap + to add roster entries',
-                      style: TextStyle(
-                          color: Colors.grey.shade400, fontSize: 13)),
-                ]))
+              ? const _RosterEmptyState(
+                  title: 'No rosters this week',
+                  message: 'Tap + to add roster entries.',
+                )
               : ListView.builder(
                   padding: const EdgeInsets.all(14),
                   itemCount: rosters.length,
@@ -175,6 +169,35 @@ class _BusOwnerRosterScreenState
               backgroundColor: Colors.red));
     }
   }
+}
+
+class _RosterEmptyState extends StatelessWidget {
+  final String title;
+  final String message;
+  const _RosterEmptyState({required this.title, required this.message});
+
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        Icon(Icons.event_busy, size: 60, color: Colors.white.withOpacity(0.35)),
+        const SizedBox(height: 12),
+        Text(title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+                fontSize: 16)),
+        const SizedBox(height: 6),
+        Text(message,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+                color: Colors.white.withOpacity(0.45),
+                fontSize: 13)),
+      ]),
+    ),
+  );
 }
 
 class _RosterCard extends StatelessWidget {

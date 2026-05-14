@@ -26,7 +26,7 @@ class _PassengerSearchScreenState
         : ref.watch(routeSearchProvider(_query));
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF1F5F9),
+      backgroundColor: const Color(0xFF0B1220),
       appBar: AppBar(
         title: const Text('Search Routes'),
         leading: IconButton(icon: const Icon(Icons.arrow_back),
@@ -35,7 +35,7 @@ class _PassengerSearchScreenState
       body: Column(children: [
         // Search bar
         Container(
-          color: Colors.white,
+          color: Colors.white.withOpacity(0.03),
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
           child: TextField(
             controller: _ctrl,
@@ -43,7 +43,7 @@ class _PassengerSearchScreenState
             onChanged: (v) => setState(() => _query = v.trim()),
             decoration: InputDecoration(
               hintText: 'Route number, name or location…',
-              prefixIcon: const Icon(Icons.search, color: Color(0xFF1A56DB)),
+              prefixIcon: const Icon(Icons.search, color: Color(0xFF0EA5E9)),
               suffixIcon: _query.isNotEmpty
                   ? IconButton(
                       icon: const Icon(Icons.clear, size: 18),
@@ -52,31 +52,36 @@ class _PassengerSearchScreenState
                         setState(() => _query = '');
                       })
                   : null,
-              filled: true, fillColor: const Color(0xFFF1F5F9),
+              filled: true,
+              fillColor: Colors.white.withOpacity(0.06),
               border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none),
+                  borderSide: BorderSide(color: Colors.white.withOpacity(0.1))),
               contentPadding: const EdgeInsets.symmetric(
                   horizontal: 16, vertical: 12),
             ),
           ),
         ),
-        const Divider(height: 1),
+        Divider(height: 1, color: Colors.white.withOpacity(0.08)),
 
         // Results
         Expanded(child: routesAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error:   (e, _) => Center(child: Text('Error: $e')),
+          error:   (e, _) => _EmptyState(
+            icon: Icons.wifi_off_rounded,
+            title: 'Could not load routes',
+            message: e.toString().replaceFirst('Exception: ', ''),
+          ),
           data: (routes) => routes.isEmpty
-              ? Center(child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center, children: [
-                  const Icon(Icons.search_off, size: 60, color: Colors.grey),
-                  const SizedBox(height: 12),
-                  Text(_query.isEmpty
+              ? _EmptyState(
+                  icon: Icons.search_off,
+                  title: _query.isEmpty
                       ? 'No routes available'
-                      : 'No routes found for "$_query"',
-                      style: const TextStyle(color: Colors.grey)),
-                ]))
+                      : 'No routes found',
+                  message: _query.isEmpty
+                      ? 'Available routes will appear here.'
+                      : 'No route matches "$_query".',
+                )
               : ListView.builder(
                   padding: const EdgeInsets.all(16),
                   itemCount: routes.length,
@@ -116,7 +121,7 @@ class _RouteCard extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF1A56DB),
+                    color: Color(0xFF0EA5E9),
                     fontSize: 13))),
           ),
           const SizedBox(width: 14),
@@ -128,24 +133,24 @@ class _RouteCard extends StatelessWidget {
             const SizedBox(height: 4),
             Text('${route.startLocation} → ${route.endLocation}',
                 style: TextStyle(
-                    color: Colors.grey.shade600, fontSize: 12)),
+                    color: Colors.white.withOpacity(0.55), fontSize: 12)),
             const SizedBox(height: 6),
             Row(children: [
               if (route.totalDistanceKm != null) ...[
                 const Icon(Icons.straighten,
-                    size: 13, color: Colors.grey),
+                    size: 13, color: Colors.white54),
                 const SizedBox(width: 3),
                 Text(route.displayDistance,
                     style: const TextStyle(
-                        color: Colors.grey, fontSize: 12)),
+                        color: Colors.white54, fontSize: 12)),
                 const SizedBox(width: 12),
               ],
               const Icon(Icons.payments_outlined,
-                  size: 13, color: Colors.grey),
+                  size: 13, color: Colors.white54),
               const SizedBox(width: 3),
               Text('LKR ${route.baseFare.toStringAsFixed(0)}',
                   style: const TextStyle(
-                      color: Colors.grey, fontSize: 12)),
+                      color: Colors.white54, fontSize: 12)),
             ]),
           ])),
           // Active buses badge
@@ -177,12 +182,46 @@ class _RouteCard extends StatelessWidget {
             ),
             const SizedBox(height: 2),
             Text('active', style: TextStyle(
-                fontSize: 10, color: Colors.grey.shade500)),
+                fontSize: 10, color: Colors.white.withOpacity(0.35))),
           ]),
           const SizedBox(width: 8),
-          const Icon(Icons.chevron_right, color: Colors.grey),
+          const Icon(Icons.chevron_right, color: Colors.white38),
         ]),
       ),
+    ),
+  );
+}
+
+class _EmptyState extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String message;
+  const _EmptyState({
+    required this.icon,
+    required this.title,
+    required this.message,
+  });
+
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        Icon(icon, size: 56, color: Colors.white.withOpacity(0.35)),
+        const SizedBox(height: 12),
+        Text(title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+                fontSize: 16)),
+        const SizedBox(height: 6),
+        Text(message,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+                color: Colors.white.withOpacity(0.45),
+                fontSize: 13)),
+      ]),
     ),
   );
 }

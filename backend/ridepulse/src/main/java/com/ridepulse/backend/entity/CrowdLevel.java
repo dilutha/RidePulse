@@ -56,7 +56,10 @@ public class CrowdLevel {
             double pct = (double) passengerCount / busCapacity * 100;
             this.capacityPercentage = BigDecimal.valueOf(pct)
                     .setScale(2, java.math.RoundingMode.HALF_UP);
-            this.crowdCategory = pct < 50 ? "low" : pct < 80 ? "medium" : "high";
+            this.crowdCategory = pct >= 100 ? "full"
+                    : pct < 50 ? "low"
+                    : pct < 80 ? "medium"
+                    : "high";
         }
     }
 }

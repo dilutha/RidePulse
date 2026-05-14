@@ -21,9 +21,9 @@ class _BusOwnerDashboardScreenState
   @override
   void initState() {
     super.initState();
-     Future.microtask(() {
-    ref.invalidate(busListProvider);
-     });
+    Future.microtask(() {
+      ref.invalidate(busOwnerDashboardProvider);
+    });
     
     _fadeCtrl = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 600));
@@ -42,7 +42,7 @@ class _BusOwnerDashboardScreenState
 
   @override
   Widget build(BuildContext context) {
-    final busesAsync = ref.watch(busListProvider);
+    final dashboardAsync = ref.watch(busOwnerDashboardProvider);
     final size       = MediaQuery.of(context).size;
 
     return Scaffold(
@@ -72,12 +72,12 @@ class _BusOwnerDashboardScreenState
               opacity: _fadeAnim,
               child: SlideTransition(
                 position: _slideAnim,
-                child: busesAsync.when(
+                child: dashboardAsync.when(
                   loading: () => const _LoadingState(),
                   error:   (e, _) => _ErrorState(
                       message: e.toString()
                           .replaceFirst('Exception: ', '')),
-                  data: (buses) => _DashBody(buses: buses),
+                  data: (dashboard) => _DashBody(dashboard: dashboard),
                 ),
               ),
             ),
@@ -137,15 +137,13 @@ class _DarkAppBar extends StatelessWidget {
 // ── Main dashboard body ───────────────────────────────────────
 
 class _DashBody extends StatelessWidget {
-  final List<BusModel> buses;
-  const _DashBody({required this.buses});
+  final BusOwnerDashboardModel dashboard;
+  const _DashBody({required this.dashboard});
 
   @override
   Widget build(BuildContext context) {
-    final totalBuses = buses.length;
-
-    final activeBuses =
-      buses.where((b) => b.isActive == true).length;
+    final totalBuses = dashboard.totalBuses;
+    final activeBuses = dashboard.activeBuses;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 22, 20, 40),
@@ -166,6 +164,22 @@ class _DashBody extends StatelessWidget {
             value: '$activeBuses',
             icon: Icons.check_circle_rounded,
             color: const Color(0xFF4ADE80),
+          ),
+        ]),
+        const SizedBox(height: 12),
+        Row(children: [
+          _StatCard(
+            label: 'Revenue',
+            value: 'LKR ${dashboard.totalMonthGrossRevenue.toStringAsFixed(0)}',
+            icon: Icons.payments_rounded,
+            color: const Color(0xFFFB923C),
+          ),
+          const SizedBox(width: 12),
+          _StatCard(
+            label: 'Complaints',
+            value: '${dashboard.totalOpenComplaints}',
+            icon: Icons.report_problem_rounded,
+            color: const Color(0xFFF87171),
           ),
         ]),
 
@@ -219,15 +233,19 @@ class _DashBody extends StatelessWidget {
         ]),
         const SizedBox(height: 12),
 
-        if (buses.isEmpty)
+        if (dashboard.buses.isEmpty)
           _EmptyFleet()
         else
-          ...buses.map((bus) => _BusSummaryCard(
+          ...dashboard.buses.map((bus) => _BusSummaryCard(
             busNumber: bus.busNumber,
-            route:     bus.route?.displayName ?? 'No route',
+            route:     bus.routeName,
             driver:    bus.assignedDriverName,
             conductor: bus.assignedConductorName,
             isActive:  bus.isActive,
+            crowdCategory: bus.crowdCategory,
+            passengerCount: bus.currentPassengerCount,
+            capacity: bus.capacity,
+            hasLocation: bus.hasLocation,
           )),
       ]),
     );
@@ -348,11 +366,19 @@ class _ActionBtnState extends State<_ActionBtn> {
 
 class _BusSummaryCard extends StatefulWidget {
   final String busNumber, route, driver, conductor;
+  final String crowdCategory;
   final bool   isActive;
+  final int passengerCount;
+  final int capacity;
+  final bool hasLocation;
   const _BusSummaryCard({
     required this.busNumber, required this.route,
     required this.driver,    required this.conductor,
     required this.isActive,
+    required this.crowdCategory,
+    required this.passengerCount,
+    required this.capacity,
+    required this.hasLocation,
   });
   @override
   State<_BusSummaryCard> createState() => _BusSummaryCardState();
@@ -440,6 +466,11 @@ class _BusSummaryCardState extends State<_BusSummaryCard> {
             Column(crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
               _StaffTag(
+                  name: '${widget.passengerCount}/${widget.capacity}',
+                  icon: Icons.groups_rounded,
+                  color: _crowdColor(widget.crowdCategory)),
+              const SizedBox(height: 4),
+              _StaffTag(
                   name: widget.driver,
                   icon: Icons.person_rounded,
                   color: const Color(0xFF38BDF8)),
@@ -454,6 +485,14 @@ class _BusSummaryCardState extends State<_BusSummaryCard> {
       ),
     );
   }
+
+  Color _crowdColor(String category) => switch (category) {
+    'low' => const Color(0xFF4ADE80),
+    'medium' => const Color(0xFFFBBF24),
+    'high' => const Color(0xFFF87171),
+    'full' => const Color(0xFFDC2626),
+    _ => const Color(0xFF94A3B8),
+  };
 }
 
 class _StaffTag extends StatelessWidget {

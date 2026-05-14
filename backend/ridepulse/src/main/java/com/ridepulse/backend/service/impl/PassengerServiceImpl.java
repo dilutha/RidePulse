@@ -97,6 +97,8 @@ public class PassengerServiceImpl implements PassengerService {
                     .stopId(s.getStopId())
                     .stopName(s.getStopName())
                     .stopSequence(s.getStopSequence())
+                    .latitude(s.getLatitude() != null ? s.getLatitude().doubleValue() : null)
+                    .longitude(s.getLongitude() != null ? s.getLongitude().doubleValue() : null)
                     .build())
                 .collect(Collectors.toList())
             : List.of();
@@ -209,7 +211,7 @@ public class PassengerServiceImpl implements PassengerService {
 
         CrowdPredictionDTO prediction = lstmClient.requestSinglePrediction(
             routeId, route.getRouteName(), target, capacity,
-            "clear", 0.0, "medium");
+            "clear", 0.0, "medium", location);
 
         if (prediction != null) {
             prediction.setMessage(location != null && !location.isBlank()
@@ -240,6 +242,8 @@ public class PassengerServiceImpl implements PassengerService {
                 .stopId(s.getStopId())
                 .stopName(s.getStopName())
                 .stopSequence(s.getStopSequence())
+                .latitude(s.getLatitude() != null ? s.getLatitude().doubleValue() : null)
+                .longitude(s.getLongitude() != null ? s.getLongitude().doubleValue() : null)
                 .build())
             .collect(Collectors.toList());
     }

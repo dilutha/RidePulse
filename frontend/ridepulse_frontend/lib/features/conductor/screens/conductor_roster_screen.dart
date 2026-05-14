@@ -19,7 +19,7 @@ class _ConductorRosterScreenState extends ConsumerState<ConductorRosterScreen> {
   DateTime _selectedDate = DateTime.now();
 
   String get _dateStr =>
-      '\${_selectedDate.year}-\${_selectedDate.month.toString().padLeft(2, "0")}-\${_selectedDate.day.toString().padLeft(2, "0")}';
+      '${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, "0")}-${_selectedDate.day.toString().padLeft(2, "0")}';
 
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
@@ -40,7 +40,7 @@ class _ConductorRosterScreenState extends ConsumerState<ConductorRosterScreen> {
         r.read(apiServiceProvider).getConductorRosterForDate(_dateStr)));
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF1F5F9),
+      backgroundColor: const Color(0xFF0B1220),
       appBar: AppBar(
         title: const Text('Duty Roster'),
         leading: IconButton(icon: const Icon(Icons.arrow_back),
@@ -49,7 +49,7 @@ class _ConductorRosterScreenState extends ConsumerState<ConductorRosterScreen> {
       body: Column(children: [
         // Date picker row
         Container(
-          color: Colors.white,
+          color: Colors.white.withOpacity(0.03),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(children: [
             IconButton(
@@ -69,21 +69,21 @@ class _ConductorRosterScreenState extends ConsumerState<ConductorRosterScreen> {
                 _selectedDate = _selectedDate.add(const Duration(days: 1)))),
           ]),
         ),
-        const Divider(height: 1),
+        Divider(height: 1, color: Colors.white.withOpacity(0.08)),
         Expanded(
           child: rosterAsync.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error:   (e, _) => Center(child: Text('Error: $e')),
+            error:   (e, _) => _EmptyRosterState(
+              title: 'Could not load duty roster',
+              message: e.toString().replaceFirst('Exception: ', ''),
+            ),
             data: (rosters) => rosters.isEmpty
-                ? Center(child: Column(
-                mainAxisAlignment: MainAxisAlignment.center, children: [
-              const Icon(Icons.event_busy, size: 56, color: Colors.grey),
-              const SizedBox(height: 12),
-              Text(isToday
+                ? _EmptyRosterState(
+              title: isToday
                   ? 'No duty assignment today'
                   : 'No roster for this date',
-                  style: const TextStyle(color: Colors.grey)),
-            ]))
+              message: 'Assigned duties will appear here.',
+            )
                 : ListView.builder(
                 padding: const EdgeInsets.all(16),
                 itemCount: rosters.length,
@@ -122,11 +122,11 @@ class _RosterCard extends StatelessWidget {
                   style: TextStyle(color: _statusColor,
                       fontSize: 11, fontWeight: FontWeight.w700))),
           const Spacer(),
-          const Row(children: [
-            Icon(Icons.access_time, size: 14, color: Colors.grey),
-            SizedBox(width: 4),
-            Text('\${roster.shiftStart} – \${roster.shiftEnd}',
-                style: TextStyle(color: Colors.grey, fontSize: 13)),
+          Row(children: [
+            const Icon(Icons.access_time, size: 14, color: Colors.white54),
+            const SizedBox(width: 4),
+            Text('${roster.shiftStart} – ${roster.shiftEnd}',
+                style: const TextStyle(color: Colors.white54, fontSize: 13)),
           ]),
         ]),
         const SizedBox(height: 12),
@@ -145,33 +145,62 @@ class _RosterCard extends StatelessWidget {
                 style: const TextStyle(
                     fontWeight: FontWeight.bold, fontSize: 17)),
             Text(roster.registrationNumber,
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+                style: TextStyle(color: Colors.white.withOpacity(0.55), fontSize: 12)),
           ]),
         ]),
         const Divider(height: 20),
         // Route info
-        const Row(children: [
-          Icon(Icons.route, size: 16, color: Color(0xFF3B82F6)),
-          SizedBox(width: 6),
+        Row(children: [
+          const Icon(Icons.route, size: 16, color: Color(0xFF0EA5E9)),
+          const SizedBox(width: 6),
           Expanded(child: Text(
-              '\${roster.routeNumber} — \${roster.routeName}',
-              style: TextStyle(fontWeight: FontWeight.w600))),
+              '${roster.routeNumber} — ${roster.routeName}',
+              style: const TextStyle(fontWeight: FontWeight.w600))),
         ]),
         const SizedBox(height: 6),
         Row(children: [
           const SizedBox(width: 22),
-          Text('\${roster.startLocation} → \${roster.endLocation}',
-              style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+          Text('${roster.startLocation} → ${roster.endLocation}',
+              style: TextStyle(color: Colors.white.withOpacity(0.55), fontSize: 13)),
         ]),
         const SizedBox(height: 6),
         Row(children: [
           const SizedBox(width: 22),
-          Text('Base Fare: LKR \${roster.baseFare.toStringAsFixed(2)}',
-              style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+          Text('Base Fare: LKR ${roster.baseFare.toStringAsFixed(2)}',
+              style: TextStyle(color: Colors.white.withOpacity(0.55), fontSize: 13)),
           const Spacer(),
-          Text('Capacity: \${roster.busCapacity}',
-              style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+          Text('Capacity: ${roster.busCapacity}',
+              style: TextStyle(color: Colors.white.withOpacity(0.55), fontSize: 13)),
         ]),
+      ]),
+    ),
+  );
+}
+
+class _EmptyRosterState extends StatelessWidget {
+  final String title;
+  final String message;
+  const _EmptyRosterState({required this.title, required this.message});
+
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        Icon(Icons.event_busy, size: 56, color: Colors.white.withOpacity(0.35)),
+        const SizedBox(height: 12),
+        Text(title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+                fontSize: 16)),
+        const SizedBox(height: 6),
+        Text(message,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+                color: Colors.white.withOpacity(0.45),
+                fontSize: 13)),
       ]),
     ),
   );

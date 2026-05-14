@@ -42,6 +42,7 @@ class _Body extends StatelessWidget {
     'low'    => const Color(0xFF4ADE80),
     'medium' => const Color(0xFFFBBF24),
     'high'   => const Color(0xFFF87171),
+    'full'   => const Color(0xFFDC2626),
     _        => const Color(0xFF94A3B8),
   };
 
@@ -49,6 +50,7 @@ class _Body extends StatelessWidget {
     'low'    => 'Not Crowded',
     'medium' => 'Moderate',
     'high'   => 'Very Crowded',
+    'full'   => 'Full',
     _        => 'Unknown',
   };
 
@@ -56,6 +58,7 @@ class _Body extends StatelessWidget {
     'low'    => Icons.sentiment_satisfied_rounded,
     'medium' => Icons.sentiment_neutral_rounded,
     'high'   => Icons.sentiment_very_dissatisfied_rounded,
+    'full'   => Icons.no_transfer_rounded,
     _        => Icons.help_outline_rounded,
   };
 

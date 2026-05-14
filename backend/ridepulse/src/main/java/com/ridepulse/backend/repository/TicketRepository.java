@@ -70,6 +70,8 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
     @Query("SELECT COUNT(t) FROM Ticket t WHERE t.trip.tripId = :tripId")
     int countByTrip_TripId(@Param("tripId") Integer tripId);
 
+    int countByTrip_TripIdAndTicketStatus(Integer tripId, String ticketStatus);
+
     // Used by: ConductorServiceImpl.toTripStatusDTO() — total fare collected in trip
     @Query("SELECT COALESCE(SUM(t.fareAmount), 0) FROM Ticket t " +
             "WHERE t.trip.tripId = :tripId AND t.ticketStatus IN ('active','used')")
@@ -100,5 +102,4 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
             @Param("month")   Integer month,
             @Param("year")    Integer year);
 }
-
 

@@ -18,4 +18,6 @@ public class StopDTO {
     private Integer stopId;
     private String  stopName;
     private Integer stopSequence;
+    private Double  latitude;
+    private Double  longitude;
 }

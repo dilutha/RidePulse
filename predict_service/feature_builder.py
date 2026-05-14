@@ -66,6 +66,7 @@ def build_features(
     weather:      str  = "clear",
     rain:         float = 0.0,
     traffic_level: str  = "medium",
+    location:     str  = "",
 ) -> np.ndarray:
     """
     Builds the full 16-feature input vector for the LSTM model.
@@ -93,8 +94,9 @@ def build_features(
     is_peak_hour = _is_peak(hour)
 
     # ── Route / location ──────────────────────────────────────
-    # location encoded as route_id % 10 (simple positional proxy)
-    location_enc = route_id % 10
+    # Demo-friendly stop encoding. Training used a numeric location feature;
+    # keep the feature position stable while letting selected stops vary output.
+    location_enc = _encode_location(location, route_id)
 
     # ── Weather ───────────────────────────────────────────────
     weather_enc = WEATHER_ENCODING.get(weather.lower(), 0)
@@ -138,6 +140,12 @@ def _is_peak(hour: int) -> int:
     morning_peak = PEAK_MORNING_START <= hour <= PEAK_MORNING_END
     evening_peak = PEAK_EVENING_START <= hour <= PEAK_EVENING_END
     return 1 if (morning_peak or evening_peak) else 0
+
+
+def _encode_location(location: str, route_id: int) -> int:
+    if not location:
+        return route_id % 10
+    return sum(ord(ch) for ch in location.lower()) % 10
 
 
 def _fetch_lag_features(
