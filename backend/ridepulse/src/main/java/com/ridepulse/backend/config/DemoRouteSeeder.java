@@ -13,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.List;
 
-@Component
+//@Component
 @RequiredArgsConstructor
 public class DemoRouteSeeder implements ApplicationRunner {
 
@@ -69,14 +69,6 @@ public class DemoRouteSeeder implements ApplicationRunner {
             stop.setLongitude(new BigDecimal(s.longitude()));
             stopRepo.save(stop);
         });
-
-        List<String> expectedNames = stops.stream()
-                .map(s -> s.name().toLowerCase())
-                .toList();
-        List<RouteStop> staleStops = existing.stream()
-                .filter(s -> !expectedNames.contains(s.getStopName().toLowerCase()))
-                .toList();
-        stopRepo.deleteAll(staleStops);
     }
 
     private record StopSeed(

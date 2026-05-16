@@ -20,6 +20,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -41,6 +42,8 @@ public class ConductorServiceImpl implements ConductorService {
     private static final DateTimeFormatter DT  = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
     private static final DateTimeFormatter D   = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final DateTimeFormatter T   = DateTimeFormatter.ofPattern("HH:mm");
+    private static final Set<String> ROUTE_138_DEMO_STOPS = Set.of(
+            "colombo fort", "nugegoda", "maharagama", "homagama");
 
     // ── Dashboard ────────────────────────────────────────────
 
@@ -327,6 +330,7 @@ public class ConductorServiceImpl implements ConductorService {
     public List<StopDTO> getRouteStops(Integer routeId) {
         return stopRepo.findByRoute_RouteIdOrderByStopSequence(routeId)
                 .stream()
+                .filter(this::isVisibleDemoStop)
                 .map(s -> StopDTO.builder()
                         .stopId(s.getStopId())
                         .stopName(s.getStopName())
@@ -335,6 +339,14 @@ public class ConductorServiceImpl implements ConductorService {
                         .longitude(s.getLongitude() != null ? s.getLongitude().doubleValue() : null)
                         .build())
                 .collect(Collectors.toList());
+    }
+
+    private boolean isVisibleDemoStop(RouteStop stop) {
+        if (stop.getRoute() == null
+                || !"138".equals(stop.getRoute().getRouteNumber())) {
+            return true;
+        }
+        return ROUTE_138_DEMO_STOPS.contains(stop.getStopName().toLowerCase());
     }
 
     // ── Welfare ───────────────────────────────────────────────

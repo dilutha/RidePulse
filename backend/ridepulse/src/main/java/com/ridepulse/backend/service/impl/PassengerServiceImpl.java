@@ -13,6 +13,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -30,6 +31,8 @@ public class PassengerServiceImpl implements PassengerService {
     private final LstmPredictionClient lstmClient;
 
     private static final DateTimeFormatter DT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+    private static final Set<String> ROUTE_138_DEMO_STOPS = Set.of(
+            "colombo fort", "nugegoda", "maharagama", "homagama");
 
     // ── Search ────────────────────────────────────────────────
 
@@ -238,6 +241,7 @@ public class PassengerServiceImpl implements PassengerService {
     public List<StopDTO> getRouteStops(Integer routeId) {
         return stopRepo.findByRoute_RouteIdOrderByStopSequence(routeId)
             .stream()
+            .filter(this::isVisibleDemoStop)
             .map(s -> StopDTO.builder()
                 .stopId(s.getStopId())
                 .stopName(s.getStopName())
@@ -246,6 +250,14 @@ public class PassengerServiceImpl implements PassengerService {
                 .longitude(s.getLongitude() != null ? s.getLongitude().doubleValue() : null)
                 .build())
             .collect(Collectors.toList());
+    }
+
+    private boolean isVisibleDemoStop(RouteStop stop) {
+        if (stop.getRoute() == null
+                || !"138".equals(stop.getRoute().getRouteNumber())) {
+            return true;
+        }
+        return ROUTE_138_DEMO_STOPS.contains(stop.getStopName().toLowerCase());
     }
 
     // ── Private helpers (Encapsulation) ──────────────────────
