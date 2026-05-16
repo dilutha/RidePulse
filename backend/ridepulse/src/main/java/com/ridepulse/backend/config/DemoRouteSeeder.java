@@ -10,6 +10,10 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+
+import org.springframework.context.annotation.Profile;
+
+import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 import java.util.List;
 
