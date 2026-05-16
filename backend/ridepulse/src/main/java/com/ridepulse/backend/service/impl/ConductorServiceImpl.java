@@ -318,20 +318,7 @@ public class ConductorServiceImpl implements ConductorService {
     @Override
     @Transactional
     public TripStatusDTO updateCrowdLevel(CrowdUpdateRequest req, Integer staffId) {
-        BusTrip trip = tripRepo.findById(req.getTripId())
-                .orElseThrow(() -> new RuntimeException("Trip not found"));
-
-        if (!"in_progress".equals(trip.getStatus())) {
-            throw new RuntimeException("Cannot update crowd — trip is not active");
-        }
-        if (trip.getRoster() == null || trip.getRoster().getStaff() == null
-                || !trip.getRoster().getStaff().getStaffId().equals(staffId)) {
-            throw new RuntimeException("Unauthorized: trip not assigned to you");
-        }
-
-        saveCrowdSnapshot(trip, req.getPassengerCount());
-
-        return toTripStatusDTO(trip, staffId);
+        throw new RuntimeException("Manual crowd input is disabled. Crowd is calculated from active issued tickets.");
     }
 
     // ── Route Stops ───────────────────────────────────────────

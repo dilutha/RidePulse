@@ -23,11 +23,11 @@ DATABASE_URL = (
 # Model
 MODEL_PATH    = os.getenv("MODEL_PATH",    "LSTM/lstm_crowd_model.h5")
 MODEL_VERSION = os.getenv("MODEL_VERSION", "lstm_v1.0")
-SERVICE_PORT  = int(os.getenv("SERVICE_PORT", "8000"))
+SERVICE_PORT  = int(os.getenv("PORT", "8000"))
 
 # Prediction thresholds (% capacity)
-THRESHOLD_LOW    = float(os.getenv("THRESHOLD_LOW",    "40.0"))
-THRESHOLD_MEDIUM = float(os.getenv("THRESHOLD_MEDIUM", "75.0"))
+THRESHOLD_LOW    = float(os.getenv("THRESHOLD_LOW",    "30.0"))
+THRESHOLD_MEDIUM = float(os.getenv("THRESHOLD_MEDIUM", "70.0"))
 
 # Time slots to generate predictions for (every 30 min, 5am–11pm)
 PREDICTION_HOURS = list(range(5, 23))    # 05:00 to 22:30

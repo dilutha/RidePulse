@@ -20,6 +20,7 @@ import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -171,15 +172,16 @@ public class ConductorController {
     /**
      * POST /api/v1/conductor/crowd/update
      * Body: { "tripId": 3, "passengerCount": 28 }
-     * Conductor manually updates passenger count on the bus.
+     * Legacy endpoint kept for older clients. Manual crowd entry is disabled:
+     * live crowd is calculated from active issued tickets.
      */
     @PostMapping("/crowd/update")
     @PreAuthorize("hasRole('conductor')")
     public ResponseEntity<TripStatusDTO> updateCrowd(
             @Valid @RequestBody CrowdUpdateRequest request,
             @AuthenticationPrincipal CustomUserDetails user) {
-        return ResponseEntity.ok(
-                conductorService.updateCrowdLevel(request, user.getStaffId()));
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                "Manual crowd input is disabled. Issue or validate tickets to update live crowd.");
     }
 
     /**

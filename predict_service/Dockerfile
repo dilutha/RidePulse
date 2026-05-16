@@ -16,12 +16,12 @@ COPY feature_builder.py .
 COPY app.py          .
 
 # Copy trained model — place lstm_crowd_model.h5 in same dir as Dockerfile
-COPY lstm_crowd_model.h5 .
+COPY LSTM/lstm_crowd_model.h5 .
 
 ENV MODEL_PATH=/app/lstm_crowd_model.h5
 ENV MODEL_VERSION=lstm_v1.0
-ENV SERVICE_PORT=8000
+
 
 EXPOSE 8000
 
-CMD ["python", "app.py"]
+CMD ["sh", "-c", "uvicorn app:app --host 0.0.0.0 --port ${PORT:-8000}"]

@@ -3,7 +3,7 @@
 // ============================================================
 
 class RouteModel {
-  final int    routeId;
+  final int routeId;
   final String routeNumber;
   final String routeName;
   final String startLocation;
@@ -20,28 +20,28 @@ class RouteModel {
   });
 
   factory RouteModel.fromJson(Map<String, dynamic> j) => RouteModel(
-    routeId:       j['routeId'],
-    routeNumber:   j['routeNumber']   ?? '',
-    routeName:     j['routeName']     ?? '',
-    startLocation: j['startLocation'] ?? '',
-    endLocation:   j['endLocation']   ?? '',
-    baseFare:      (j['baseFare'] as num?)?.toDouble() ?? 0,
-  );
+        routeId: j['routeId'],
+        routeNumber: j['routeNumber'] ?? '',
+        routeName: j['routeName'] ?? '',
+        startLocation: j['startLocation'] ?? '',
+        endLocation: j['endLocation'] ?? '',
+        baseFare: (j['baseFare'] as num?)?.toDouble() ?? 0,
+      );
 
   // Encapsulation: display string is built by the model
   String get displayName => '$routeNumber — $routeName';
 }
 
 class BusModel {
-  final int         busId;
-  final String      busNumber;
-  final String      registrationNumber;
-  final int         capacity;
-  final String?     model;
-  final bool        isActive;
+  final int busId;
+  final String busNumber;
+  final String registrationNumber;
+  final int capacity;
+  final String? model;
+  final bool isActive;
   final RouteModel? route;
-  final String      assignedDriverName;
-  final String      assignedConductorName;
+  final String assignedDriverName;
+  final String assignedConductorName;
 
   BusModel({
     required this.busId,
@@ -56,16 +56,16 @@ class BusModel {
   });
 
   factory BusModel.fromJson(Map<String, dynamic> j) => BusModel(
-    busId:                j['busId'],
-    busNumber:            j['busNumber']            ?? '',
-    registrationNumber:   j['registrationNumber']   ?? '',
-    capacity:             j['capacity']             ?? 0,
-    model:                j['model'],
-    isActive:             j['isActive']             ?? true,
-    route: j['route'] != null ? RouteModel.fromJson(j['route']) : null,
-    assignedDriverName:    j['assignedDriverName']   ?? 'Unassigned',
-    assignedConductorName: j['assignedConductorName'] ?? 'Unassigned',
-  );
+        busId: j['busId'],
+        busNumber: j['busNumber'] ?? '',
+        registrationNumber: j['registrationNumber'] ?? '',
+        capacity: j['capacity'] ?? 0,
+        model: j['model'],
+        isActive: j['isActive'] ?? true,
+        route: j['route'] != null ? RouteModel.fromJson(j['route']) : null,
+        assignedDriverName: j['assignedDriverName'] ?? 'Unassigned',
+        assignedConductorName: j['assignedConductorName'] ?? 'Unassigned',
+      );
 }
 
 class BusOwnerDashboardModel {
@@ -109,12 +109,10 @@ class BusOwnerDashboardModel {
             (j['totalMonthGrossRevenue'] as num?)?.toDouble() ?? 0,
         totalMonthNetProfit:
             (j['totalMonthNetProfit'] as num?)?.toDouble() ?? 0,
-        totalDriverWelfare:
-            (j['totalDriverWelfare'] as num?)?.toDouble() ?? 0,
+        totalDriverWelfare: (j['totalDriverWelfare'] as num?)?.toDouble() ?? 0,
         totalConductorWelfare:
             (j['totalConductorWelfare'] as num?)?.toDouble() ?? 0,
-        totalOpenComplaints:
-            (j['totalOpenComplaints'] as num?)?.toInt() ?? 0,
+        totalOpenComplaints: (j['totalOpenComplaints'] as num?)?.toInt() ?? 0,
         buses: (j['buses'] as List<dynamic>?)
                 ?.map((e) => BusDashboardCardModel.fromJson(
                     Map<String, dynamic>.from(e as Map)))
@@ -171,11 +169,9 @@ class BusDashboardCardModel {
         crowdCategory: j['crowdCategory'] ?? 'unknown',
         currentPassengerCount:
             (j['currentPassengerCount'] as num?)?.toInt() ?? 0,
-        monthGrossRevenue:
-            (j['monthGrossRevenue'] as num?)?.toDouble() ?? 0,
+        monthGrossRevenue: (j['monthGrossRevenue'] as num?)?.toDouble() ?? 0,
         monthNetProfit: (j['monthNetProfit'] as num?)?.toDouble() ?? 0,
-        openComplaintsCount:
-            (j['openComplaintsCount'] as num?)?.toInt() ?? 0,
+        openComplaintsCount: (j['openComplaintsCount'] as num?)?.toInt() ?? 0,
         assignedDriverName: j['assignedDriverName'] ?? 'Unassigned',
         assignedConductorName: j['assignedConductorName'] ?? 'Unassigned',
       );
@@ -184,18 +180,18 @@ class BusDashboardCardModel {
 }
 
 class StaffModel {
-  final int     staffId;
-  final String  fullName;
-  final String  phone;
-  final String  employeeId;
-  final String  staffType;
+  final int staffId;
+  final String fullName;
+  final String phone;
+  final String employeeId;
+  final String staffType;
   final String? licenseNumber;
-  final double  baseSalary;
-  final bool    isActive;
-  final String  assignedBusNumber;
-  final int     dutyDaysThisMonth;
-  final double  welfareBalanceThisMonth;
-  final double  cumulativeWelfareBalance;
+  final double baseSalary;
+  final bool isActive;
+  final String assignedBusNumber;
+  final int dutyDaysThisMonth;
+  final double welfareBalanceThisMonth;
+  final double cumulativeWelfareBalance;
 
   StaffModel({
     required this.staffId,
@@ -213,26 +209,28 @@ class StaffModel {
   });
 
   factory StaffModel.fromJson(Map<String, dynamic> j) => StaffModel(
-    staffId:                  j['staffId'],
-    fullName:                 j['fullName']                 ?? '',
-    phone:                    j['phone']                    ?? '',
-    employeeId:               j['employeeId']               ?? '',
-    staffType:                j['staffType']                ?? '',
-    licenseNumber:            j['licenseNumber'],
-    baseSalary:               (j['baseSalary'] as num?)?.toDouble() ?? 0,
-    isActive:                 j['isActive']                 ?? true,
-    assignedBusNumber:        j['assignedBusNumber']        ?? 'Unassigned',
-    dutyDaysThisMonth:        j['dutyDaysThisMonth']        ?? 0,
-    welfareBalanceThisMonth:  (j['welfareBalanceThisMonth'] as num?)?.toDouble() ?? 0,
-    cumulativeWelfareBalance: (j['cumulativeWelfareBalance'] as num?)?.toDouble() ?? 0,
-  );
+        staffId: j['staffId'],
+        fullName: j['fullName'] ?? '',
+        phone: j['phone'] ?? '',
+        employeeId: j['employeeId'] ?? '',
+        staffType: j['staffType'] ?? '',
+        licenseNumber: j['licenseNumber'],
+        baseSalary: (j['baseSalary'] as num?)?.toDouble() ?? 0,
+        isActive: j['isActive'] ?? true,
+        assignedBusNumber: j['assignedBusNumber'] ?? 'Unassigned',
+        dutyDaysThisMonth: j['dutyDaysThisMonth'] ?? 0,
+        welfareBalanceThisMonth:
+            (j['welfareBalanceThisMonth'] as num?)?.toDouble() ?? 0,
+        cumulativeWelfareBalance:
+            (j['cumulativeWelfareBalance'] as num?)?.toDouble() ?? 0,
+      );
 }
 
 class MonthlyRevenueModel {
-  final int    busId;
+  final int busId;
   final String busNumber;
-  final int    month;
-  final int    year;
+  final int month;
+  final int year;
   final double grossRevenue;
   final double totalFuelCost;
   final double maintenanceCost;
@@ -240,7 +238,7 @@ class MonthlyRevenueModel {
   final double netProfit;
   final double driverWelfareAmount;
   final double conductorWelfareAmount;
-  final bool   isFinalized;
+  final bool isFinalized;
 
   MonthlyRevenueModel({
     required this.busId,
@@ -259,29 +257,31 @@ class MonthlyRevenueModel {
 
   factory MonthlyRevenueModel.fromJson(Map<String, dynamic> j) =>
       MonthlyRevenueModel(
-    busId:                  j['busId'],
-    busNumber:              j['busNumber']              ?? '',
-    month:                  j['month']                  ?? 0,
-    year:                   j['year']                   ?? 0,
-    grossRevenue:           (j['grossRevenue']           as num?)?.toDouble() ?? 0,
-    totalFuelCost:          (j['totalFuelCost']          as num?)?.toDouble() ?? 0,
-    maintenanceCost:        (j['maintenanceCost']        as num?)?.toDouble() ?? 0,
-    totalStaffSalaries:     (j['totalStaffSalaries']     as num?)?.toDouble() ?? 0,
-    netProfit:              (j['netProfit']              as num?)?.toDouble() ?? 0,
-    driverWelfareAmount:    (j['driverWelfareAmount']    as num?)?.toDouble() ?? 0,
-    conductorWelfareAmount: (j['conductorWelfareAmount'] as num?)?.toDouble() ?? 0,
-    isFinalized:            j['isFinalized']             ?? false,
-  );
+        busId: j['busId'],
+        busNumber: j['busNumber'] ?? '',
+        month: j['month'] ?? 0,
+        year: j['year'] ?? 0,
+        grossRevenue: (j['grossRevenue'] as num?)?.toDouble() ?? 0,
+        totalFuelCost: (j['totalFuelCost'] as num?)?.toDouble() ?? 0,
+        maintenanceCost: (j['maintenanceCost'] as num?)?.toDouble() ?? 0,
+        totalStaffSalaries: (j['totalStaffSalaries'] as num?)?.toDouble() ?? 0,
+        netProfit: (j['netProfit'] as num?)?.toDouble() ?? 0,
+        driverWelfareAmount:
+            (j['driverWelfareAmount'] as num?)?.toDouble() ?? 0,
+        conductorWelfareAmount:
+            (j['conductorWelfareAmount'] as num?)?.toDouble() ?? 0,
+        isFinalized: j['isFinalized'] ?? false,
+      );
 }
 
 class BusLocationModel {
-  final int     busId;
-  final String  busNumber;
-  final double  latitude;
-  final double  longitude;
+  final int busId;
+  final String busNumber;
+  final double latitude;
+  final double longitude;
   final double? speedKmh;
-  final String  crowdCategory;
-  final String  recordedAt;
+  final String crowdCategory;
+  final String recordedAt;
 
   BusLocationModel({
     required this.busId,
@@ -294,12 +294,12 @@ class BusLocationModel {
   });
 
   factory BusLocationModel.fromJson(Map<String, dynamic> j) => BusLocationModel(
-    busId:         j['busId'],
-    busNumber:     j['busNumber']     ?? '',
-    latitude:      (j['latitude']     as num).toDouble(),
-    longitude:     (j['longitude']    as num).toDouble(),
-    speedKmh:      (j['speedKmh']     as num?)?.toDouble(),
-    crowdCategory: j['crowdCategory'] ?? 'unknown',
-    recordedAt:    j['recordedAt']    ?? '',
-  );
+        busId: j['busId'],
+        busNumber: j['busNumber'] ?? '',
+        latitude: (j['latitude'] as num).toDouble(),
+        longitude: (j['longitude'] as num).toDouble(),
+        speedKmh: (j['speedKmh'] as num?)?.toDouble(),
+        crowdCategory: j['crowdCategory'] ?? 'unknown',
+        recordedAt: j['recordedAt'] ?? '',
+      );
 }

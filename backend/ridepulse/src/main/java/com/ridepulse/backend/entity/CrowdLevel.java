@@ -57,8 +57,8 @@ public class CrowdLevel {
             this.capacityPercentage = BigDecimal.valueOf(pct)
                     .setScale(2, java.math.RoundingMode.HALF_UP);
             this.crowdCategory = pct >= 100 ? "full"
-                    : pct < 50 ? "low"
-                    : pct < 80 ? "medium"
+                    : pct <= 30 ? "low"
+                    : pct <= 70 ? "medium"
                     : "high";
         }
     }

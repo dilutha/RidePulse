@@ -125,6 +125,8 @@ public class LstmPredictionClient {
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         try {
+            log.info("LSTM single prediction request: {}",
+                    objectMapper.writeValueAsString(request));
             ResponseEntity<Map> res = restTemplate.exchange(
                     lstmServiceUrl + "/predict/single",
                     HttpMethod.POST,

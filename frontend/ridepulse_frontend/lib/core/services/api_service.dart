@@ -17,7 +17,7 @@ import '../models/passenger_models.dart';
 const String _base = 'http://localhost:8080/api/v1';
 const Duration _apiTimeout = Duration(seconds: 12);
 
-void _autoRefresh(Ref ref, {Duration interval = const Duration(seconds: 5)}) {
+void _autoRefresh(Ref ref, {Duration interval = const Duration(seconds: 30)}) {
   var ticks = 0;
   late final Timer timer;
   timer = Timer.periodic(interval, (_) {
@@ -45,13 +45,15 @@ final busOwnerDashboardProvider =
   return ref.read(apiServiceProvider).getBusOwnerDashboard();
 });
 
-final routeDropdownProvider = FutureProvider.autoDispose<List<RouteModel>>((ref) async {
+final routeDropdownProvider =
+    FutureProvider.autoDispose<List<RouteModel>>((ref) async {
   return ref.read(apiServiceProvider).getRoutes();
 });
 
 final busServiceProvider = Provider<ApiService>((ref) => ApiService());
 
-final busLocationsProvider = FutureProvider.autoDispose<List<BusLocationModel>>((ref) async {
+final busLocationsProvider =
+    FutureProvider.autoDispose<List<BusLocationModel>>((ref) async {
   _autoRefresh(ref);
   return ref.read(apiServiceProvider).getLiveBusLocations();
 });
@@ -69,15 +71,16 @@ final staffServiceProvider = Provider<ApiService>((ref) => ApiService());
 final monthlyRevenueProvider = FutureProvider.autoDispose
     .family<List<MonthlyRevenueModel>, ({int month, int year})>(
         (ref, params) async {
-  return ref.read(apiServiceProvider)
+  return ref
+      .read(apiServiceProvider)
       .getMonthlyRevenue(month: params.month, year: params.year);
 });
 
 // Welfare provider
 final welfareProvider = FutureProvider.autoDispose
-    .family<List<StaffModel>, ({int month, int year})>(
-        (ref, params) async {
-  return ref.read(apiServiceProvider)
+    .family<List<StaffModel>, ({int month, int year})>((ref, params) async {
+  return ref
+      .read(apiServiceProvider)
       .getWelfareSummary(month: params.month, year: params.year);
 });
 
@@ -90,7 +93,8 @@ final myComplaintsProvider =
 final authorityComplaintsProvider = FutureProvider.autoDispose
     .family<List<ComplaintSummary>, ({String? status, String? category})>(
         (ref, params) async {
-  return ref.read(apiServiceProvider)
+  return ref
+      .read(apiServiceProvider)
       .getAuthorityComplaints(status: params.status, category: params.category);
 });
 
@@ -142,8 +146,8 @@ final activeBusesProvider = FutureProvider.autoDispose
   return ref.read(apiServiceProvider).getActiveBusesOnRoute(routeId);
 });
 
-final busLiveDetailProvider = FutureProvider.autoDispose
-    .family<BusLiveDetail, int>((ref, busId) async {
+final busLiveDetailProvider =
+    FutureProvider.autoDispose.family<BusLiveDetail, int>((ref, busId) async {
   _autoRefresh(ref);
   return ref.read(apiServiceProvider).getBusLiveDetail(busId);
 });
@@ -151,7 +155,8 @@ final busLiveDetailProvider = FutureProvider.autoDispose
 final crowdPredictionProvider = FutureProvider.autoDispose
     .family<RoutePredictionSchedule, ({int routeId, String date})>(
         (ref, params) async {
-  return ref.read(apiServiceProvider)
+  return ref
+      .read(apiServiceProvider)
       .getCrowdPredictions(params.routeId, params.date);
 });
 
@@ -163,7 +168,6 @@ final passengerRouteStopsProvider = FutureProvider.autoDispose
 // ── Driver providers ──────────────────────────────────────────
 final driverDashboardProvider =
     FutureProvider.autoDispose<DriverDashboardModel>((ref) async {
-
   final prefs = await SharedPreferences.getInstance();
   final token = prefs.getString('access_token');
 
@@ -233,29 +237,35 @@ class ApiService {
   }
 
   Future<dynamic> _get(String path) async {
-    final res = await http.get(Uri.parse('$_base$path'),
-        headers: await _headers).timeout(_apiTimeout);
+    final res = await http
+        .get(Uri.parse('$_base$path'), headers: await _headers)
+        .timeout(_apiTimeout);
     _check(res);
     return _decode(res) ?? <dynamic>[];
   }
 
   Future<dynamic> _post(String path, Map<String, dynamic> body) async {
-    final res = await http.post(Uri.parse('$_base$path'),
-        headers: await _headers, body: jsonEncode(body)).timeout(_apiTimeout);
+    final res = await http
+        .post(Uri.parse('$_base$path'),
+            headers: await _headers, body: jsonEncode(body))
+        .timeout(_apiTimeout);
     _check(res);
     return _decode(res);
   }
 
   Future<dynamic> _patch(String path, Map<String, dynamic> body) async {
-    final res = await http.patch(Uri.parse('$_base$path'),
-        headers: await _headers, body: jsonEncode(body)).timeout(_apiTimeout);
+    final res = await http
+        .patch(Uri.parse('$_base$path'),
+            headers: await _headers, body: jsonEncode(body))
+        .timeout(_apiTimeout);
     _check(res);
     return _decode(res);
   }
 
   Future<dynamic> _delete(String path) async {
-    final res = await http.delete(Uri.parse('$_base$path'),
-        headers: await _headers).timeout(_apiTimeout);
+    final res = await http
+        .delete(Uri.parse('$_base$path'), headers: await _headers)
+        .timeout(_apiTimeout);
     _check(res);
     return _decode(res);
   }
@@ -267,10 +277,8 @@ class ApiService {
         try {
           final body = jsonDecode(res.body);
           if (body is Map) {
-            message = body['message'] ??
-                body['error'] ??
-                body['detail'] ??
-                message;
+            message =
+                body['message'] ?? body['error'] ?? body['detail'] ?? message;
           }
         } catch (_) {
           message = res.body;
@@ -348,8 +356,8 @@ class ApiService {
   }
 
   Future<void> updateSalary(int staffId, double salary) async {
-    await _patch('/bus-owner/staff/salary',
-        {'staffId': staffId, 'baseSalary': salary});
+    await _patch(
+        '/bus-owner/staff/salary', {'staffId': staffId, 'baseSalary': salary});
   }
 
   Future<void> assignStaffToBus(int staffId, int busId) async {
@@ -364,7 +372,8 @@ class ApiService {
   Future<List<MonthlyRevenueModel>> getMonthlyRevenue(
       {required int month, required int year}) async {
     final data =
-        await _get('/bus-owner/revenue/monthly?month=$month&year=$year') as List;
+        await _get('/bus-owner/revenue/monthly?month=$month&year=$year')
+            as List;
     return data.map((e) => MonthlyRevenueModel.fromJson(e)).toList();
   }
 
@@ -383,8 +392,9 @@ class ApiService {
 
   Future<List<StaffModel>> getWelfareSummary(
       {required int month, required int year}) async {
-    final data = await _get(
-        '/bus-owner/revenue/welfare?month=$month&year=$year') as List;
+    final data =
+        await _get('/bus-owner/revenue/welfare?month=$month&year=$year')
+            as List;
     return data.map((e) => StaffModel.fromJson(e)).toList();
   }
 
@@ -398,8 +408,7 @@ class ApiService {
   }
 
   Future<List<BusLocationModel>> getLiveBusLocations() async {
-    final data =
-        await _get('/bus-owner/dashboard/live-locations') as List;
+    final data = await _get('/bus-owner/dashboard/live-locations') as List;
     return data.map((e) => BusLocationModel.fromJson(e)).toList();
   }
 
@@ -443,7 +452,7 @@ class ApiService {
       {String? status, String? category}) async {
     var path = '/authority/complaints';
     final params = <String>[];
-    if (status   != null) params.add('status=$status');
+    if (status != null) params.add('status=$status');
     if (category != null) params.add('category=$category');
     if (params.isNotEmpty) path += '?${params.join('&')}';
     final data = await _get(path) as List;
@@ -462,9 +471,9 @@ class ApiService {
     required String authorityFeedback,
   }) async {
     final data = await _patch('/authority/complaints/decision', {
-      'complaintId':      complaintId,
-      'action':           action,
-      'resolutionNote':   resolutionNote,
+      'complaintId': complaintId,
+      'action': action,
+      'resolutionNote': resolutionNote,
       'authorityFeedback': authorityFeedback,
     });
     return ComplaintDetail.fromJson(data);
@@ -519,12 +528,12 @@ class ApiService {
     String? passengerUserId,
   }) async {
     final data = await _post('/conductor/ticket/issue', {
-      'tripId':          tripId,
-      'routeId':         routeId,
-      'boardingStopId':  boardingStopId,
+      'tripId': tripId,
+      'routeId': routeId,
+      'boardingStopId': boardingStopId,
       'alightingStopId': alightingStopId,
-      'ticketCount':     ticketCount,
-      'paymentMethod':   paymentMethod,
+      'ticketCount': ticketCount,
+      'paymentMethod': paymentMethod,
       'passengerUserId': passengerUserId,
     });
     return TicketModel.fromJson(data);
@@ -537,8 +546,8 @@ class ApiService {
 
   // ── Conductor — Crowd ──────────────────────────────────────
   Future<TripModel> updateCrowdLevel(int tripId, int count) async {
-    final data = await _post('/conductor/crowd/update',
-        {'tripId': tripId, 'passengerCount': count});
+    final data = await _post(
+        '/conductor/crowd/update', {'tripId': tripId, 'passengerCount': count});
     return TripModel.fromJson(data);
   }
 
@@ -550,11 +559,11 @@ class ApiService {
     double? heading,
   }) async {
     await _post('/conductor/gps/update', {
-      'tripId':    tripId,
-      'latitude':  latitude,
+      'tripId': tripId,
+      'latitude': latitude,
       'longitude': longitude,
-      'speedKmh':  speedKmh,
-      'heading':   heading,
+      'speedKmh': speedKmh,
+      'heading': heading,
     });
   }
 
@@ -598,8 +607,8 @@ class ApiService {
   // ── Passenger — Crowd Prediction ───────────────────────────
   Future<RoutePredictionSchedule> getCrowdPredictions(
       int routeId, String date) async {
-    final data = await _get(
-        '/passenger/routes/$routeId/predictions?date=$date');
+    final data =
+        await _get('/passenger/routes/$routeId/predictions?date=$date');
     return RoutePredictionSchedule.fromJson(data);
   }
 
@@ -624,13 +633,13 @@ class ApiService {
 
   // ── Authority — Prediction trigger ────────────────────────
   Future<void> generateTodayPredictions({
-    String weather      = 'clear',
-    double rain         = 0.0,
+    String weather = 'clear',
+    double rain = 0.0,
     String trafficLevel = 'medium',
   }) async {
     await _post('/authority/predictions/generate/today', {
-      'weather':      weather,
-      'rain':         rain,
+      'weather': weather,
+      'rain': rain,
       'trafficLevel': trafficLevel,
     });
   }
@@ -672,28 +681,28 @@ class ApiService {
     double? heading,
   }) async {
     await _post('/driver/gps/update', {
-      'tripId':    tripId,
-      'latitude':  latitude,
+      'tripId': tripId,
+      'latitude': latitude,
       'longitude': longitude,
-      'speedKmh':  speedKmh,
-      'heading':   heading,
+      'speedKmh': speedKmh,
+      'heading': heading,
     });
   }
 
   // ── Driver — Emergency ─────────────────────────────────────
   Future<EmergencyAlertModel> raiseEmergencyAlert({
-    required int    tripId,
+    required int tripId,
     required String alertType,
-    String?         description,
-    double?         latitude,
-    double?         longitude,
+    String? description,
+    double? latitude,
+    double? longitude,
   }) async {
     final data = await _post('/driver/emergency/raise', {
-      'tripId':      tripId,
-      'alertType':   alertType,
+      'tripId': tripId,
+      'alertType': alertType,
       'description': description,
-      'latitude':    latitude,
-      'longitude':   longitude,
+      'latitude': latitude,
+      'longitude': longitude,
     });
     return EmergencyAlertModel.fromJson(data);
   }
@@ -755,8 +764,8 @@ class ApiService {
   }
 
   Future<FareConfig> updateFare(int routeId, double baseFare) async {
-    final data = await _patch('/authority/fares',
-        {'routeId': routeId, 'baseFare': baseFare});
+    final data = await _patch(
+        '/authority/fares', {'routeId': routeId, 'baseFare': baseFare});
     return FareConfig.fromJson(data);
   }
 
@@ -767,18 +776,18 @@ class ApiService {
   }
 
   Future<dynamic> createRoster({
-    required int    staffId,
-    required int    busId,
+    required int staffId,
+    required int busId,
     required String dutyDate,
     required String shiftStart,
     required String shiftEnd,
   }) async {
     return await _post('/bus-owner/roster', {
-      'staffId':    staffId,
-      'busId':      busId,
-      'dutyDate':   dutyDate,
+      'staffId': staffId,
+      'busId': busId,
+      'dutyDate': dutyDate,
       'shiftStart': shiftStart,
-      'shiftEnd':   shiftEnd,
+      'shiftEnd': shiftEnd,
     });
   }
 
@@ -787,17 +796,17 @@ class ApiService {
   }
 
   Future<dynamic> updateRosterByOwner({
-    required int     rosterId,
-    String?  shiftStart,
-    String?  shiftEnd,
-    String?  dutyDate,
-    String?  status,
+    required int rosterId,
+    String? shiftStart,
+    String? shiftEnd,
+    String? dutyDate,
+    String? status,
   }) async {
     return await _patch('/bus-owner/roster/$rosterId', {
       if (shiftStart != null) 'shiftStart': shiftStart,
-      if (shiftEnd   != null) 'shiftEnd':   shiftEnd,
-      if (dutyDate   != null) 'dutyDate':   dutyDate,
-      if (status     != null) 'status':     status,
+      if (shiftEnd != null) 'shiftEnd': shiftEnd,
+      if (dutyDate != null) 'dutyDate': dutyDate,
+      if (status != null) 'status': status,
     });
   }
 
@@ -808,15 +817,15 @@ class ApiService {
   }
 
   Future<dynamic> updateRosterByAuthority({
-    required int    rosterId,
-    String?  shiftStart,
-    String?  shiftEnd,
-    String?  status,
+    required int rosterId,
+    String? shiftStart,
+    String? shiftEnd,
+    String? status,
   }) async {
     return await _patch('/authority/roster/$rosterId', {
       if (shiftStart != null) 'shiftStart': shiftStart,
-      if (shiftEnd   != null) 'shiftEnd':   shiftEnd,
-      if (status     != null) 'status':     status,
+      if (shiftEnd != null) 'shiftEnd': shiftEnd,
+      if (status != null) 'status': status,
     });
   }
 }

@@ -12,7 +12,8 @@ import '../../../core/models/conductor_models.dart';
 class ConductorTripScreen extends ConsumerStatefulWidget {
   const ConductorTripScreen({super.key});
   @override
-  ConsumerState<ConductorTripScreen> createState() => _ConductorTripScreenState();
+  ConsumerState<ConductorTripScreen> createState() =>
+      _ConductorTripScreenState();
 }
 
 class _ConductorTripScreenState extends ConsumerState<ConductorTripScreen> {
@@ -23,11 +24,9 @@ class _ConductorTripScreenState extends ConsumerState<ConductorTripScreen> {
 
   static const _demoPath = [
     (6.9344, 79.8428),
-    (6.9271, 79.8612),
-    (6.9147, 79.8778),
-    (6.9603, 79.8830),
-    (6.9377, 79.8786),
-    (6.9790, 79.9297),
+    (6.8721, 79.8890),
+    (6.8480, 79.9265),
+    (6.8405, 80.0024),
   ];
 
   @override
@@ -38,36 +37,42 @@ class _ConductorTripScreenState extends ConsumerState<ConductorTripScreen> {
 
   void _startGpsLoop(int tripId) {
     _gpsTimer?.cancel();
-    _gpsTimer = Timer.periodic(const Duration(seconds: 15), (_) async {
+    _gpsTimer = Timer.periodic(const Duration(seconds: 30), (_) async {
       try {
         _gpsIndex = (_gpsIndex + 1) % _demoPath.length;
         final point = _demoPath[_gpsIndex];
         await ref.read(apiServiceProvider).sendConductorGpsUpdate(
-          tripId: tripId,
-          latitude: point.$1,
-          longitude: point.$2,
-        );
+              tripId: tripId,
+              latitude: point.$1,
+              longitude: point.$2,
+            );
       } catch (_) {}
     });
   }
 
   Future<void> _startTrip(RosterModel roster) async {
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
-      final trip = await ref.read(apiServiceProvider).startTrip(roster.rosterId);
+      final trip =
+          await ref.read(apiServiceProvider).startTrip(roster.rosterId);
       _gpsIndex = 0;
       final point = _demoPath[_gpsIndex];
       await ref.read(apiServiceProvider).sendConductorGpsUpdate(
-        tripId: trip.tripId,
-        latitude: point.$1,
-        longitude: point.$2,
-      );
+            tripId: trip.tripId,
+            latitude: point.$1,
+            longitude: point.$2,
+          );
       _startGpsLoop(trip.tripId);
       ref.invalidate(conductorDashboardProvider);
       ref.invalidate(conductorRosterTodayProvider);
     } catch (e) {
       setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
-    } finally { setState(() => _loading = false); }
+    } finally {
+      setState(() => _loading = false);
+    }
   }
 
   Future<void> _stopTrip(TripModel trip) async {
@@ -75,46 +80,40 @@ class _ConductorTripScreenState extends ConsumerState<ConductorTripScreen> {
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('Stop Trip'),
-        content: Text(
-            'Stop the current trip on ${trip.busNumber}?\n'
-                'Tickets issued: ${trip.ticketsIssuedCount}\n'
-                'Fare collected: LKR ${trip.totalFareCollected.toStringAsFixed(2)}'),
+        content: Text('Stop the current trip on ${trip.busNumber}?\n'
+            'Tickets issued: ${trip.ticketsIssuedCount}\n'
+            'Fare collected: LKR ${trip.totalFareCollected.toStringAsFixed(2)}'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false),
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
               child: const Text('Cancel')),
           ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('Stop Trip', style: TextStyle(color: Colors.white))),
+              child: const Text('Stop Trip',
+                  style: TextStyle(color: Colors.white))),
         ],
       ),
     );
     if (confirm != true) return;
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     _gpsTimer?.cancel();
     try {
       await ref.read(apiServiceProvider).stopTrip(trip.tripId);
       ref.invalidate(conductorDashboardProvider);
       ref.invalidate(conductorRosterTodayProvider);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Trip completed successfully'),
-              backgroundColor: Colors.green));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Trip completed successfully'),
+            backgroundColor: Colors.green));
       }
     } catch (e) {
       setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
-    } finally { setState(() => _loading = false); }
-  }
-
-  Future<void> _updateCrowd(TripModel trip, int count) async {
-    try {
-      await ref.read(apiServiceProvider).updateCrowdLevel(trip.tripId, count);
-      ref.invalidate(conductorDashboardProvider);
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
-      }
+    } finally {
+      setState(() => _loading = false);
     }
   }
 
@@ -126,17 +125,18 @@ class _ConductorTripScreenState extends ConsumerState<ConductorTripScreen> {
       backgroundColor: const Color(0xFF0B1220),
       appBar: AppBar(
         title: const Text('Trip Management'),
-        leading: IconButton(icon: const Icon(Icons.arrow_back),
+        leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
             onPressed: () => context.go('/conductor/home')),
       ),
       body: dashAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error:   (e, _) => _TripEmptyState(
+        error: (e, _) => _TripEmptyState(
           title: 'Could not load trip',
           message: e.toString().replaceFirst('Exception: ', ''),
         ),
         data: (dash) {
-          final roster     = dash.todayRoster;
+          final roster = dash.todayRoster;
           final activeTrip = dash.activeTrip;
 
           if (roster == null) {
@@ -158,12 +158,15 @@ class _ConductorTripScreenState extends ConsumerState<ConductorTripScreen> {
                   padding: const EdgeInsets.all(12),
                   margin: const EdgeInsets.only(bottom: 12),
                   decoration: BoxDecoration(
-                      color: Colors.red.shade50, borderRadius: BorderRadius.circular(10)),
+                      color: Colors.red.shade50,
+                      borderRadius: BorderRadius.circular(10)),
                   child: Row(children: [
-                    const Icon(Icons.error_outline, color: Colors.red, size: 18),
+                    const Icon(Icons.error_outline,
+                        color: Colors.red, size: 18),
                     const SizedBox(width: 8),
-                    Expanded(child: Text(_error!,
-                        style: const TextStyle(color: Colors.red))),
+                    Expanded(
+                        child: Text(_error!,
+                            style: const TextStyle(color: Colors.red))),
                   ]),
                 ),
 
@@ -172,29 +175,35 @@ class _ConductorTripScreenState extends ConsumerState<ConductorTripScreen> {
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.04),
+                      color: Colors.white.withValues(alpha: 0.04),
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: Colors.white.withOpacity(0.1))),
+                      border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.1))),
                   child: Column(children: [
                     const Icon(Icons.play_circle_outline,
                         size: 60, color: Color(0xFF10B981)),
                     const SizedBox(height: 12),
                     const Text('Ready to Start Trip',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w600)),
                     const SizedBox(height: 4),
                     Text('Route: ${roster.routeName}',
-                        style: TextStyle(color: Colors.white.withOpacity(0.5))),
+                        style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.5))),
                     const SizedBox(height: 20),
                     SizedBox(
-                      width: double.infinity, height: 52,
+                      width: double.infinity,
+                      height: 52,
                       child: ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF10B981)),
                           onPressed: _loading ? null : () => _startTrip(roster),
                           icon: _loading
-                              ? const SizedBox(width: 18, height: 18,
-                              child: CircularProgressIndicator(
-                                  color: Colors.white, strokeWidth: 2))
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                      color: Colors.white, strokeWidth: 2))
                               : const Icon(Icons.play_arrow, size: 22),
                           label: const Text('Start Trip',
                               style: TextStyle(fontSize: 16))),
@@ -206,11 +215,9 @@ class _ConductorTripScreenState extends ConsumerState<ConductorTripScreen> {
                 _TripLiveCard(trip: activeTrip),
                 const SizedBox(height: 16),
 
-                // Crowd counter
-                _CrowdCounter(
-                    trip: activeTrip,
-                    busCapacity: roster.busCapacity,
-                    onUpdate: (count) => _updateCrowd(activeTrip, count)),
+                // Ticket-derived crowd status
+                _TicketCrowdStatus(
+                    trip: activeTrip, busCapacity: roster.busCapacity),
                 const SizedBox(height: 16),
 
                 // Action buttons
@@ -224,8 +231,8 @@ class _ConductorTripScreenState extends ConsumerState<ConductorTripScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: OutlinedButton.icon(
-                        onPressed: () => context.go(
-                            '/conductor/trip/${activeTrip.tripId}/tickets'),
+                        onPressed: () => context
+                            .go('/conductor/trip/${activeTrip.tripId}/tickets'),
                         icon: const Icon(Icons.list_alt),
                         label: const Text('View Tickets')),
                   ),
@@ -234,13 +241,15 @@ class _ConductorTripScreenState extends ConsumerState<ConductorTripScreen> {
 
                 // Stop trip
                 SizedBox(
-                  width: double.infinity, height: 52,
+                  width: double.infinity,
+                  height: 52,
                   child: ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFEF4444)),
                       onPressed: _loading ? null : () => _stopTrip(activeTrip),
                       icon: const Icon(Icons.stop_circle_outlined, size: 22),
-                      label: const Text('Stop Trip', style: TextStyle(fontSize: 16))),
+                      label: const Text('Stop Trip',
+                          style: TextStyle(fontSize: 16))),
                 ),
               ],
             ]),
@@ -256,37 +265,42 @@ class _RosterCard extends StatelessWidget {
   const _RosterCard({required this.roster});
   @override
   Widget build(BuildContext context) => Card(
-      child: Padding(
+        child: Padding(
           padding: const EdgeInsets.all(16),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(children: [
-          const Icon(Icons.event_note, color: Color(0xFFB45309), size: 20),
-          const SizedBox(width: 8),
-          const Text("Today's Assignment",
-          style: TextStyle(fontWeight: FontWeight.bold)),
-      const Spacer(),
-      Text(roster.dutyDate,
-          style: const TextStyle(color: Colors.grey, fontSize: 12)),
-      ]),
-  const Divider(height: 16),
-  _row('Bus',   '${roster.busNumber} (${roster.registrationNumber})'),
-  _row('Route', roster.routeName),
-  _row('From',  roster.startLocation),
-  _row('To',    roster.endLocation),
-  _row('Shift', '${roster.shiftStart} – ${roster.shiftEnd}'),
-  _row('Base Fare', 'LKR ${roster.baseFare.toStringAsFixed(2)}'),
-  ]),
-  ),
-  );
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              const Icon(Icons.event_note, color: Color(0xFFB45309), size: 20),
+              const SizedBox(width: 8),
+              const Text("Today's Assignment",
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+              const Spacer(),
+              Text(roster.dutyDate,
+                  style: const TextStyle(color: Colors.grey, fontSize: 12)),
+            ]),
+            const Divider(height: 16),
+            _row('Bus', '${roster.busNumber} (${roster.registrationNumber})'),
+            _row('Route', roster.routeName),
+            _row('From', roster.startLocation),
+            _row('To', roster.endLocation),
+            _row('Shift', '${roster.shiftStart} – ${roster.shiftEnd}'),
+            _row('Base Fare', 'LKR ${roster.baseFare.toStringAsFixed(2)}'),
+          ]),
+        ),
+      );
   Widget _row(String k, String v) => Padding(
-  padding: const EdgeInsets.only(bottom: 5),
-  child: Row(children: [
-  SizedBox(width: 70, child: Text(k,
-  style: const TextStyle(color: Colors.grey, fontSize: 13))),
-  Expanded(child: Text(v,
-  style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13))),
-  ]),
-  );
+        padding: const EdgeInsets.only(bottom: 5),
+        child: Row(children: [
+          SizedBox(
+              width: 70,
+              child: Text(k,
+                  style: const TextStyle(color: Colors.grey, fontSize: 13))),
+          Expanded(
+              child: Text(v,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w500, fontSize: 13))),
+        ]),
+      );
 }
 
 class _TripEmptyState extends StatelessWidget {
@@ -296,26 +310,26 @@ class _TripEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Center(
-    child: Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(mainAxisSize: MainAxisSize.min, children: [
-        Icon(Icons.event_busy, size: 60, color: Colors.white.withOpacity(0.35)),
-        const SizedBox(height: 12),
-        Text(title,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w600)),
-        const SizedBox(height: 6),
-        Text(message,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-                color: Colors.white.withOpacity(0.45),
-                fontSize: 13)),
-      ]),
-    ),
-  );
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Icon(Icons.event_busy,
+                size: 60, color: Colors.white.withValues(alpha: 0.35)),
+            const SizedBox(height: 12),
+            Text(title,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600)),
+            const SizedBox(height: 6),
+            Text(message,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.45), fontSize: 13)),
+          ]),
+        ),
+      );
 }
 
 class _TripLiveCard extends StatelessWidget {
@@ -323,130 +337,108 @@ class _TripLiveCard extends StatelessWidget {
   const _TripLiveCard({required this.trip});
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(18),
-    decoration: BoxDecoration(
-        gradient: const LinearGradient(
-            colors: [Color(0xFF065F46), Color(0xFF10B981)]),
-        borderRadius: BorderRadius.circular(14)),
-    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      const Row(children: [
-        Icon(Icons.circle, color: Colors.greenAccent, size: 10),
-        SizedBox(width: 6),
-        Text('TRIP IN PROGRESS', style: TextStyle(
-            color: Colors.white70, fontSize: 12, letterSpacing: 1)),
-      ]),
-      const SizedBox(height: 10),
-      Text(trip.routeName,
-          style: const TextStyle(color: Colors.white,
-              fontSize: 18, fontWeight: FontWeight.bold)),
-      Text('Started: ${trip.tripStart}',
-          style: const TextStyle(color: Colors.white70, fontSize: 12)),
-      const SizedBox(height: 14),
-      Row(children: [
-        _LiveStat('Tickets', '${trip.ticketsIssuedCount}',
-            Icons.confirmation_number),
-        const SizedBox(width: 20),
-        _LiveStat('Fare Collected',
-            'LKR ${trip.totalFareCollected.toStringAsFixed(2)}',
-            Icons.payments_outlined),
-        const SizedBox(width: 20),
-        _LiveStat('Passengers',
-            '${trip.currentPassengerCount}', Icons.people_outline),
-      ]),
-    ]),
-  );
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+            gradient: const LinearGradient(
+                colors: [Color(0xFF065F46), Color(0xFF10B981)]),
+            borderRadius: BorderRadius.circular(14)),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const Row(children: [
+            Icon(Icons.circle, color: Colors.greenAccent, size: 10),
+            SizedBox(width: 6),
+            Text('TRIP IN PROGRESS',
+                style: TextStyle(
+                    color: Colors.white70, fontSize: 12, letterSpacing: 1)),
+          ]),
+          const SizedBox(height: 10),
+          Text(trip.routeName,
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold)),
+          Text('Started: ${trip.tripStart}',
+              style: const TextStyle(color: Colors.white70, fontSize: 12)),
+          const SizedBox(height: 14),
+          Row(children: [
+            _LiveStat('Tickets', '${trip.ticketsIssuedCount}',
+                Icons.confirmation_number),
+            const SizedBox(width: 20),
+            _LiveStat(
+                'Fare Collected',
+                'LKR ${trip.totalFareCollected.toStringAsFixed(2)}',
+                Icons.payments_outlined),
+            const SizedBox(width: 20),
+            _LiveStat('Passengers', '${trip.currentPassengerCount}',
+                Icons.people_outline),
+          ]),
+        ]),
+      );
 }
 
 class _LiveStat extends StatelessWidget {
-  final String label, value; final IconData icon;
+  final String label, value;
+  final IconData icon;
   const _LiveStat(this.label, this.value, this.icon);
   @override
-  Widget build(BuildContext context) => Column(
-      crossAxisAlignment: CrossAxisAlignment.start, children: [
-    Icon(icon, color: Colors.white70, size: 16),
-    const SizedBox(height: 4),
-    Text(value, style: const TextStyle(
-        color: Colors.white, fontWeight: FontWeight.bold)),
-    Text(label, style: const TextStyle(color: Colors.white70, fontSize: 10)),
-  ]);
+  Widget build(BuildContext context) =>
+      Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Icon(icon, color: Colors.white70, size: 16),
+        const SizedBox(height: 4),
+        Text(value,
+            style: const TextStyle(
+                color: Colors.white, fontWeight: FontWeight.bold)),
+        Text(label,
+            style: const TextStyle(color: Colors.white70, fontSize: 10)),
+      ]);
 }
 
-class _CrowdCounter extends StatefulWidget {
+class _TicketCrowdStatus extends StatelessWidget {
   final TripModel trip;
   final int busCapacity;
-  final void Function(int) onUpdate;
-  const _CrowdCounter({required this.trip, required this.busCapacity,
-    required this.onUpdate});
-  @override
-  State<_CrowdCounter> createState() => _CrowdCounterState();
-}
+  const _TicketCrowdStatus({required this.trip, required this.busCapacity});
 
-class _CrowdCounterState extends State<_CrowdCounter> {
-  late int _count;
-
-  @override
-  void initState() {
-    super.initState();
-    _count = widget.trip.currentPassengerCount;
-  }
-
-  double get _pct => widget.busCapacity > 0
-      ? (_count / widget.busCapacity).clamp(0.0, 1.0) : 0;
+  double get _pct => busCapacity > 0
+      ? (trip.currentPassengerCount / busCapacity).clamp(0.0, 1.0)
+      : 0;
 
   Color get _color => _pct < 0.4
       ? const Color(0xFF10B981)
       : _pct < 0.75
-      ? const Color(0xFFF59E0B)
-      : const Color(0xFFEF4444);
+          ? const Color(0xFFF59E0B)
+          : const Color(0xFFEF4444);
 
   @override
   Widget build(BuildContext context) => Card(
-    child: Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(children: [
-        const Row(children: [
-          Icon(Icons.people, size: 18, color: Color(0xFFB45309)),
-          SizedBox(width: 8),
-          Text('Passenger Count',
-              style: TextStyle(fontWeight: FontWeight.w600)),
-        ]),
-        const SizedBox(height: 16),
-        // Progress bar
-        ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: LinearProgressIndicator(
-                value: _pct, minHeight: 14,
-                backgroundColor: _color.withOpacity(0.1),
-                valueColor: AlwaysStoppedAnimation(_color))),
-        const SizedBox(height: 8),
-        Text('$_count / ${widget.busCapacity} passengers  '
-            '(${(_pct * 100).toStringAsFixed(0)}%)',
-            style: TextStyle(color: _color, fontWeight: FontWeight.w600)),
-        const SizedBox(height: 16),
-        // Counter controls
-        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          IconButton(
-              style: IconButton.styleFrom(
-                  backgroundColor: Colors.red.shade50,
-                  foregroundColor: Colors.red),
-              icon: const Icon(Icons.remove, size: 22),
-              onPressed: _count > 0
-                  ? () { setState(() => _count--); widget.onUpdate(_count); }
-                  : null),
-          const SizedBox(width: 24),
-          Text('$_count',
-              style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
-          const SizedBox(width: 24),
-          IconButton(
-              style: IconButton.styleFrom(
-                  backgroundColor: Colors.green.shade50,
-                  foregroundColor: const Color(0xFF10B981)),
-              icon: const Icon(Icons.add, size: 22),
-              onPressed: _count < widget.busCapacity
-                  ? () { setState(() => _count++); widget.onUpdate(_count); }
-                  : null),
-        ]),
-      ]),
-    ),
-  );
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(children: [
+            const Row(children: [
+              Icon(Icons.people, size: 18, color: Color(0xFFB45309)),
+              SizedBox(width: 8),
+              Text('Passenger Count',
+                  style: TextStyle(fontWeight: FontWeight.w600)),
+            ]),
+            const SizedBox(height: 16),
+            ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: LinearProgressIndicator(
+                    value: _pct,
+                    minHeight: 14,
+                    backgroundColor: _color.withValues(alpha: 0.1),
+                    valueColor: AlwaysStoppedAnimation(_color))),
+            const SizedBox(height: 8),
+            Text(
+                '${trip.currentPassengerCount} / $busCapacity passengers  '
+                '(${(_pct * 100).toStringAsFixed(0)}%)',
+                style: TextStyle(color: _color, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 10),
+            Text(
+              'Crowd is calculated automatically from active issued tickets.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.55), fontSize: 12),
+            ),
+          ]),
+        ),
+      );
 }

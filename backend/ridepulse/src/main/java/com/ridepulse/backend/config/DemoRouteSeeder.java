@@ -26,21 +26,27 @@ public class DemoRouteSeeder implements ApplicationRunner {
         Route route = routeRepo.findByRouteNumber("138")
                 .orElseGet(() -> routeRepo.save(Route.builder()
                         .routeNumber("138")
-                        .routeName("Fort - Kiribathgoda")
-                        .startLocation("Fort")
-                        .endLocation("Kiribathgoda")
-                        .totalDistanceKm(new BigDecimal("12.50"))
+                        .routeName("Colombo Fort - Homagama")
+                        .startLocation("Colombo Fort")
+                        .endLocation("Homagama")
+                        .totalDistanceKm(new BigDecimal("22.50"))
                         .baseFare(new BigDecimal("30.00"))
                         .isActive(true)
                         .build()));
 
+        route.setRouteName("Colombo Fort - Homagama");
+        route.setStartLocation("Colombo Fort");
+        route.setEndLocation("Homagama");
+        route.setTotalDistanceKm(new BigDecimal("22.50"));
+        route.setBaseFare(new BigDecimal("30.00"));
+        route.setIsActive(true);
+        routeRepo.save(route);
+
         List<StopSeed> stops = List.of(
-                new StopSeed("Fort", 1, "6.93440000", "79.84280000"),
-                new StopSeed("Maradana", 2, "6.92710000", "79.86120000"),
-                new StopSeed("Borella", 3, "6.91470000", "79.87780000"),
-                new StopSeed("Peliyagoda", 4, "6.96030000", "79.88300000"),
-                new StopSeed("Dematagoda", 5, "6.93770000", "79.87860000"),
-                new StopSeed("Kiribathgoda", 6, "6.97900000", "79.92970000")
+                new StopSeed("Colombo Fort", 1, "6.93440000", "79.84280000"),
+                new StopSeed("Nugegoda", 2, "6.87210000", "79.88900000"),
+                new StopSeed("Maharagama", 3, "6.84800000", "79.92650000"),
+                new StopSeed("Homagama", 4, "6.84050000", "80.00240000")
         );
 
         List<RouteStop> existing = stopRepo.findByRoute_RouteIdOrderByStopSequence(route.getRouteId());
@@ -63,6 +69,14 @@ public class DemoRouteSeeder implements ApplicationRunner {
             stop.setLongitude(new BigDecimal(s.longitude()));
             stopRepo.save(stop);
         });
+
+        List<String> expectedNames = stops.stream()
+                .map(s -> s.name().toLowerCase())
+                .toList();
+        List<RouteStop> staleStops = existing.stream()
+                .filter(s -> !expectedNames.contains(s.getStopName().toLowerCase()))
+                .toList();
+        stopRepo.deleteAll(staleStops);
     }
 
     private record StopSeed(
