@@ -14,7 +14,7 @@ import '../models/conductor_models.dart';
 import '../models/driver_models.dart';
 import '../models/passenger_models.dart';
 
-const String _base = 'http://localhost:8080/api/v1';
+const String _base = 'https://ridepulse-backend.onrender.com';
 const Duration _apiTimeout = Duration(seconds: 12);
 
 void _autoRefresh(Ref ref, {Duration interval = const Duration(seconds: 30)}) {
