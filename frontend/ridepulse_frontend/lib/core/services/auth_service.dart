@@ -13,7 +13,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/auth_models.dart';
 
-const String _base = 'http://localhost:8080/api/v1';
+const String _base = 'https://ridepulse-backend.onrender.com';
 
 final authServiceProvider = Provider<AuthService>((ref) => AuthService());
 

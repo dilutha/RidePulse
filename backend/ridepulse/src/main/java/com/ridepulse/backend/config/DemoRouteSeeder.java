@@ -13,7 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.List;
 
-//@Component
+@Profile("dev")
+@Component
 @RequiredArgsConstructor
 public class DemoRouteSeeder implements ApplicationRunner {
 

@@ -1,6 +1,8 @@
 spring:
   application:
     name: ridepulse-backend
+    profiles:
+      active: prod
 
   datasource:
     url: jdbc:postgresql://aws-1-ap-northeast-1.pooler.supabase.com:6543/postgres?sslmode=require&prepareThreshold=0
