@@ -28,7 +28,7 @@ spring:
       thread-name-prefix: prediction-
 
 server:
-  port: 8080
+  port: ${PORT:8080}
 
 app:
   jwt:
@@ -42,5 +42,5 @@ logging:
 
 lstm:
   service:
-    url: http://localhost:8000
+    url: https://ridepulse.onrender.com
     enabled: true
